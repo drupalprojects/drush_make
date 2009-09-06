@@ -48,12 +48,15 @@ function drush_make($makefile = NULL) {
   }
   elseif (!($info = drush_make_parse_info_file($makefile))) {
     drush_set_error(dt('The specified makefile doesn\'t exist.'));
+    return;
   }
   elseif (empty($info['projects'])) {
     drush_set_error(dt('The specified makefile doesn\'t have any projects.'));
+    return;
   }
   elseif (empty($info['core'])) {
     drush_set_error(dt('The specified makefile doesn\'t have a core version.'));
+    return;
   }
 
   drush_print(dt('Getting project information...'));
