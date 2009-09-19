@@ -46,7 +46,10 @@ function drush_make($makefile = NULL) {
   drush_print(dt('Getting project information...'));
 
   // The final array of projects.
-  $projects = array();
+  $projects = array(new DrushMake_Core(array(
+    'name' => 'drupal',
+    'core' => $info['core'],
+  )));
 
   // As a first pass, get project information..
   foreach ($info['projects'] as $project => $project_info) {
@@ -60,8 +63,6 @@ function drush_make($makefile = NULL) {
 
     $projects[] = new DrushMake_Project($project_info);
   }
-
-  $drupal_filename = drush_make_download_drupal($info);
 
   drush_print(dt('Downloading projects...'));
 
@@ -80,39 +81,6 @@ function drush_make($makefile = NULL) {
     drush_op('chdir', '..');
     drush_shell_exec("tar -czf $drupal_filename.tar.gz $drupal_filename");
     drush_shell_exec('rm -r ' . $drupal_filename);
-  }
-}
-
-function drush_make_download_drupal($info) {
-  $project_info = array(
-    'name' => 'drupal',
-    'core' => $info['core'],
-  );
-  $project = new DrushMake_Project($project_info);
-  $file = $project->download();
-
-  // Get the filename once unzipped.
-  drush_shell_exec('tar -tf ' . $file);
-  $output = drush_shell_exec_output();
-  drush_shell_exec('tar -xf ' . $file);
-  drush_op('unlink', $file);
-  if ($tar = drush_get_option('tar')) {
-    $file = trim(array_shift($output), '/');
-    drush_shell_exec('mv ' . $file . ' ' . $tar);
-    chdir($tar);
-    return $tar;
-  }
-  else {
-    foreach ($output as $item) {
-      $parts = explode('/', trim($item, '/'));
-      if (count($parts) == 2) {
-        drush_shell_exec('mv ' . $item . ' ' . $parts[1]);
-      }
-      elseif (count($parts) == 1) {
-        $root = $parts[0];
-      }
-    }
-    drush_shell_exec('rm -r ' . $root);
   }
 }
 

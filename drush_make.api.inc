@@ -157,3 +157,31 @@ class DrushMake_Project {
     return $best;
   }
 }
+
+class DrushMake_Core extends DrushMake_Project {
+  function move($file) {
+    // Get the filename once unzipped.
+    drush_shell_exec('tar -tf ' . $file);
+    $output = drush_shell_exec_output();
+    drush_shell_exec('tar -xf ' . $file);
+    drush_op('unlink', $file);
+    if ($tar = drush_get_option('tar')) {
+      $file = trim(array_shift($output), '/');
+      drush_shell_exec('mv ' . $file . ' ' . $tar);
+      chdir($tar);
+      return $tar;
+    }
+    else {
+      foreach ($output as $item) {
+        $parts = explode('/', trim($item, '/'));
+        if (count($parts) == 2) {
+          drush_shell_exec('mv ' . $item . ' ' . $parts[1]);
+        }
+        elseif (count($parts) == 1) {
+          $root = $parts[0];
+        }
+      }
+      drush_shell_exec('rm -r ' . $root);
+    }
+  }
+}
