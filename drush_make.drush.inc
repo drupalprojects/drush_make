@@ -46,10 +46,12 @@ function drush_make($makefile = NULL) {
   drush_print(dt('Getting project information...'));
 
   // The final array of projects.
-  $projects = array(new DrushMake_Core(array(
-    'name' => 'drupal',
-    'core' => $info['core'],
-  )));
+  $projects = array(
+    'drupal' => new DrushMake_Core(array(
+      'name' => 'drupal',
+      'core' => $info['core'],
+    )),
+  );
 
   // As a first pass, get project information..
   foreach ($info['projects'] as $project => $project_info) {
@@ -61,7 +63,7 @@ function drush_make($makefile = NULL) {
     $project_info['name'] = $project;
     $project_info['core'] = $info['core'];
 
-    $projects[] = new DrushMake_Project($project_info);
+    $projects[$project_info['name']] = new DrushMake_Project($project_info);
   }
 
   drush_print(dt('Downloading projects...'));
@@ -76,7 +78,8 @@ function drush_make($makefile = NULL) {
     drush_shell_exec("cp sites/default/default.settings.php sites/default/settings.php");
   }
 
-  if ($drupal_filename) {
+  if ($projects['drupal']->tar) {
+    $drupal_filename = $projects['drupal']->tar;
     // Tarring is enabled.
     drush_op('chdir', '..');
     drush_shell_exec("tar -czf $drupal_filename.tar.gz $drupal_filename");

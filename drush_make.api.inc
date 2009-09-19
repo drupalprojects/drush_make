@@ -159,6 +159,7 @@ class DrushMake_Project {
 }
 
 class DrushMake_Core extends DrushMake_Project {
+  var $tar;
   function move($file) {
     // Get the filename once unzipped.
     drush_shell_exec('tar -tf ' . $file);
@@ -169,7 +170,7 @@ class DrushMake_Core extends DrushMake_Project {
       $file = trim(array_shift($output), '/');
       drush_shell_exec('mv ' . $file . ' ' . $tar);
       chdir($tar);
-      return $tar;
+      $this->tar = $tar;
     }
     else {
       foreach ($output as $item) {
