@@ -1,4 +1,5 @@
 <?php
+// $Id$
 
 class DrushMake_Project {
   var $name = '';
