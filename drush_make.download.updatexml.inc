@@ -6,26 +6,8 @@ class DrushMakeDownload_UpdateXML extends DrushMakeDownload {
   }
 
   function preDownload() {
-    // First, get the release history.
-    @$this->release_history = simplexml_load_file($this->project->location . '/' . $this->project->name . '/' . $this->project->core);
-    if (!$this->release_history) {
-      drush_set_error(dt("Could not retrieve version information for @project.", array('@project' => $this->project->name)));
-      return;
-    }
-
-    // Determine the project type.
-    $term_map = array('Modules' => 'module', 'Themes' => 'theme');
-    // Iterate through all terms related to this project.
-    foreach ($this->release_history->terms->term as $term) {
-      // If the term is eather 'Modules' or 'Themes', add it.
-      if (in_array((string) $term->value, array_keys($term_map))) {
-        $this->project->type = $term_map[(string)$term->value];
-        break;
-      }
-    }
-
     // Make an array of releases.
-    foreach ($this->release_history->releases->release as $release) {
+    foreach ($this->project->release_history->releases->release as $release) {
       $version = (string) $release->version_major;
       if ((string) $release->version_patch) {
         $version .= '.' . (string) $release->version_patch;
@@ -48,7 +30,7 @@ class DrushMakeDownload_UpdateXML extends DrushMakeDownload {
     
     // Find the best release.
     if ($this->project->version == DRUSH_MAKE_VERSION_BEST) {
-      $recommended_major = (string)$this->release_history->recommended_major;
+      $recommended_major = (string)$this->project->release_history->recommended_major;
       $this->project->version = $this->getBestRelease($recommended_major);
     }
     else {

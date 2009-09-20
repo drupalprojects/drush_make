@@ -5,15 +5,6 @@
  * The base project class.
  */
 class DrushMakeProject {
-  var $base_path = '.';
-  var $name = '';
-  var $version = DRUSH_MAKE_VERSION_BEST;
-  var $location = DRUSH_MAKE_UPDATE_DEFAULT_URL;
-  var $subdir = '';
-  var $directory_name = '';
-  var $core = '';
-  var $download;
-
   /**
    * Set attributes and retrieve project information.
    */
@@ -27,17 +18,30 @@ class DrushMakeProject {
     }
   }
 
-  function factory($project) {
-    
+  public static function factory($project) {
+    $project += array(
+      'version' => DRUSH_MAKE_VERSION_BEST,
+      'location' => DRUSH_MAKE_UPDATE_DEFAULT_URL,
+      'subdir' => '',
+      'directory_name' => '',
+    );
+    if (!$project['type']) {
+      $project += self::downloadData($project);
+    }
+    include_once 'drush_make.project.' . $project['type'] . '.inc';
+    $class = 'DrushMakeProject_' . $project['type'];
+    return new $class($project);
   }
 
   /**
    * Build a project.
    */
   function make() {
-    if ($directory = $this->downloadClass->download()) {
+    if (empty($this->made) && $directory = $this->downloadClass->download()) {
       $path = $this->move($directory);
       $this->applyPatches($path);
+      // Prevent making the same project multiple times.
+      $this->made = TRUE;
     }
   }
 
@@ -55,7 +59,7 @@ class DrushMakeProject {
         if (file_exists($filename)) {
           drush_shell_exec("mv {$filename} {$project_directory}");
           drush_shell_exec("patch -p0 -d {$project_directory} < {$project_directory}/{$filename}");
-          drush_print("  {$this->name} patched with {$filename}.");
+          drush_print("{$this->name} patched with {$filename}.");
         }
         else {
           drush_set_error("Unable to download $filename from $url.");
@@ -83,21 +87,7 @@ class DrushMakeProject {
    * Generate the proper path for this project type.
    */
   protected function generatePath() {
-    switch ($this->type) {
-      case 'profile':
-        $path = $this->base_path . '/profiles';
-        break;
-      case 'module':
-        $path = $this->base_path . '/sites/all/modules';
-        break;
-      case 'theme':
-      case 'theme engine':
-        $path = $this->base_path . '/sites/all/themes';
-        break;
-      // @TODO
-      case 'translation':
-        break;
-    }
+    $path = $this->base_path . '/' . $this->project_path;
     // If directory doesn't exist, create it.
     if (!is_dir($path)) {
       drush_op('mkdir', $path);
@@ -113,17 +103,23 @@ class DrushMakeProject {
     }
     return $path;
   }
-}
 
-class DrushMakeProject_Core extends DrushMakeProject {
-  protected function move($project_directory) {
-    if ($this->base_path == '.') {
-      drush_shell_exec("mv {$project_directory}/* {$this->base_path}");
-      drush_shell_exec("mv {$project_directory}/.* {$this->base_path}");
-      drush_shell_exec("rmdir {$project_directory}");
+  protected static function downloadData($project) {
+    // First, get the release history.
+    @$release_history = simplexml_load_file($project['location'] . '/' . $project['name'] . '/' . $project['core']);
+    if (!$release_history) {
+      drush_set_error(dt("Could not retrieve version information for @project.", array('@project' => $project['name'])));
+      return;
     }
-    else {
-      drush_shell_exec("mv {$project_directory} {$this->base_path}");
+
+    // Determine the project type.
+    $term_map = array('Modules' => 'module', 'Themes' => 'theme', 'Drupal project' => 'core', 'Install profiles' => 'profiles');
+    // Iterate through all terms related to this project.
+    foreach ($release_history->terms->term as $term) {
+      // If the term is eather 'Modules' or 'Themes', add it.
+      if (in_array((string) $term->value, array_keys($term_map))) {
+        return array('release_history' => $release_history, 'type' => $term_map[(string)$term->value]);
+      }
     }
   }
 }

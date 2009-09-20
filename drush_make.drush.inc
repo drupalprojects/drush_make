@@ -67,12 +67,7 @@ function drush_make($makefile = NULL, $base_path = NULL) {
   $base_path = drush_make_get_base_path($base_path);
 
   // Retrieve project information
-  $projects = array('drupal' => array(
-    'name' => 'drupal',
-    'core' => $info['core'],
-    'base_path' => $base_path,
-    'type' => 'core',
-  ));
+  $projects = array();
 
   foreach ($info['projects'] as $project => $project_info) {
     // Cover if there is no project info, it's just a project name.
@@ -80,7 +75,7 @@ function drush_make($makefile = NULL, $base_path = NULL) {
       $project = $project_info;
       $project_info = array();
     }
-    $project += array(
+    $project_info += array(
       'name'      => $project,
       'core'      => $info['core'],
       'base_path' => $base_path,
@@ -89,11 +84,15 @@ function drush_make($makefile = NULL, $base_path = NULL) {
     $project = $projects[$project_info['name']] = DrushMakeProject::factory($project_info);
 
     if ($project->type == 'core') {
-      if (isset($core)) {
-        unset($projects[$core->name]);
-      }
       $core = $project;
     }
+  }
+  if (!isset($core)) {
+    $core = DrushMakeProject::factory(array(
+      'name' => 'drupal',
+      'core' => $info['core'],
+      'base_path' => $base_path,
+    ));
   }
 
   drush_print(dt('Building projects...'));
