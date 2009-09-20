@@ -19,6 +19,7 @@ function drush_make_drush_command() {
     ),
     'arguments' => array(
       'path/to/script' => 'The path to the makefile. The path may be absolute or relative to the current working dir.',
+      'drupal' => 'The destination directory for the build.',
     ),
   );
  
@@ -36,24 +37,37 @@ function drush_make_drush_help($section) {
 }
 
 /**
+ * Establish the destination base_path for this build.
+ */
+function drush_make_get_base_path($destination = '', $reset = FALSE) {
+  static $base_path;
+  if (!isset($base_path) || $reset) {
+    if (drush_get_option('tar')) {
+      $base_path = drush_get_option('tar');
+    }
+    else if (!empty($destination)) {
+      $base_path = trim($destination, '/');
+    }
+    else {
+      $base_path = '.';
+    }
+  }
+  return $base_path;
+}
+
+/**
  * Drush callback; make based on the makefile.
  */
-function drush_make($makefile = NULL) {
+function drush_make($makefile = NULL, $base_path = NULL) {
   if (!($info = drush_make_get_info($makefile))) {
     return;
   }
 
   drush_print(dt('Getting project information...'));
+  $base_path = drush_make_get_base_path($base_path);
 
-  // The final array of projects.
-  $projects = array(
-    'drupal' => new DrushMake_Core(array(
-      'name' => 'drupal',
-      'core' => $info['core'],
-    )),
-  );
-
-  // As a first pass, get project information..
+  // Retrieve project information
+  $projects = array();
   foreach ($info['projects'] as $project => $project_info) {
     // Cover if there is no project info, it's just a project name.
     if (is_string($project_info) && is_numeric($project)) {
@@ -62,31 +76,50 @@ function drush_make($makefile = NULL) {
     }
     $project_info['name'] = $project;
     $project_info['core'] = $info['core'];
+    $project_info['base_path'] = $base_path;
 
-    $projects[$project_info['name']] = new DrushMake_Project($project_info);
-  }
-
-  drush_print(dt('Downloading projects...'));
-
-  foreach ($projects as $project) {
-    if ($file = $project->download()) {
-      $project->move($file);
+    if ($project_info['type'] == 'core') {
+      $core = new DrushMakeProject_Core($project_info);
+    }
+    else {
+      $projects[$project_info['name']] = new DrushMakeProject($project_info);
     }
   }
-    
-  if (drush_get_option('copy-settings')) {
-    drush_shell_exec("cp sites/default/default.settings.php sites/default/settings.php");
+
+  // If core project was not explicitly specified, provide default
+  if (!isset($core)) {
+    $project = array(
+      'name' => 'drupal',
+      'core' => $info['core'],
+      'base_path' => $base_path,
+      'type' => 'core',
+    );
+    $core = new DrushMakeProject_Core($project);
   }
 
-  if ($projects['drupal']->tar) {
-    $drupal_filename = $projects['drupal']->tar;
-    // Tarring is enabled.
-    drush_op('chdir', '..');
-    drush_shell_exec("tar -czf $drupal_filename.tar.gz $drupal_filename");
-    drush_shell_exec('rm -r ' . $drupal_filename);
+  drush_print(dt('Building projects...'));
+
+  // Build projects
+  $core->make();
+  foreach ($projects as $project) {
+    $project->make();
+  }
+
+  // Copy settings.php.
+  if (drush_get_option('copy-settings')) {
+    drush_shell_exec("cp {$base_path}/sites/default/default.settings.php {$base_path}/sites/default/settings.php");
+  }
+
+  // Tarring is enabled.
+  if (drush_get_option('tar')) {
+    drush_shell_exec("tar -czf $base_path.tar.gz $base_path");
+    drush_shell_exec('rm -r ' . $base_path);
   }
 }
 
+/**
+ * Retrieve and parse the makefile.
+ */
 function drush_make_get_info($makefile) {
   // Do some error checking.
   if (!isset($makefile)) {
