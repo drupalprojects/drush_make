@@ -125,7 +125,14 @@ class DrushMakeProject_Core extends DrushMakeProject {
 }
 
 class DrushMakeDownload {
-  protected function __construct() {}
+  var $project;
+  var $path;
+
+  protected function __construct($project) {
+    $this->project = $project;
+    $this->path = !empty($this->project->directory_name) ? $this->project->directory_name : $this->project->name;
+    $this->preDownload();
+  }
 
   function factory($project) {
     if (empty($project->download) || empty($project->download['type'])) {
@@ -139,6 +146,10 @@ class DrushMakeDownload {
     else {
       return FALSE;
     }
+  }
+
+  function preDownload() {
+    return FALSE;
   }
 
   function download() {

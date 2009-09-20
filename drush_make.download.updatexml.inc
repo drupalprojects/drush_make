@@ -1,9 +1,8 @@
 <?php
 
-class DrushMakeDownload_UpdateXML {
+class DrushMakeDownload_UpdateXML extends DrushMakeDownload {
   public function __construct(&$project) {
-    $this->project = $project;
-    $this->preDownload();
+    parent::__construct($project);
   }
 
   function preDownload() {

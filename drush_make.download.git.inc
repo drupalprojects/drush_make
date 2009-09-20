@@ -2,8 +2,7 @@
 
 class DrushMakeDownload_Git extends DrushMakeDownload {
   public function __construct(&$project) {
-    $this->project = $project;
-    $this->path = !empty($this->project->directory_name) ? $this->project->directory_name : $this->project->name;
+    parent::__construct($project);
   }
 
   function download() {
