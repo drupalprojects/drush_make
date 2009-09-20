@@ -13,7 +13,7 @@ class DrushMakeDownload_CVS extends DrushMakeDownload {
       $flags = isset($this->project->download['revision']) ? "-r {$this->project->download['revision']}" : '';
 
       drush_shell_exec("mkdir {$this->path}");
-      drush_shell_exec("cvs -d:{$this->project->download['root']} checkout -P -d {$this->path} {$flags} {$this->project->download['module']}");
+      drush_shell_exec("cvs -d:{$this->project->download['root']} export -d {$this->path} {$flags} {$this->project->download['module']}");
       drush_print("{$this->project->name} checked out from {$this->project->download['module']}.");
       return $this->path;
     }

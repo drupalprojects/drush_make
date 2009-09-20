@@ -67,34 +67,33 @@ function drush_make($makefile = NULL, $base_path = NULL) {
   $base_path = drush_make_get_base_path($base_path);
 
   // Retrieve project information
-  $projects = array();
+  $projects = array('drupal' => array(
+    'name' => 'drupal',
+    'core' => $info['core'],
+    'base_path' => $base_path,
+    'type' => 'core',
+  ));
+
   foreach ($info['projects'] as $project => $project_info) {
     // Cover if there is no project info, it's just a project name.
     if (is_string($project_info) && is_numeric($project)) {
       $project = $project_info;
       $project_info = array();
     }
-    $project_info['name'] = $project;
-    $project_info['core'] = $info['core'];
-    $project_info['base_path'] = $base_path;
-
-    if ($project_info['type'] == 'core') {
-      $core = new DrushMakeProject_Core($project_info);
-    }
-    else {
-      $projects[$project_info['name']] = new DrushMakeProject($project_info);
-    }
-  }
-
-  // If core project was not explicitly specified, provide default
-  if (!isset($core)) {
-    $project = array(
-      'name' => 'drupal',
-      'core' => $info['core'],
+    $project += array(
+      'name'      => $project,
+      'core'      => $info['core'],
       'base_path' => $base_path,
-      'type' => 'core',
     );
-    $core = new DrushMakeProject_Core($project);
+
+    $project = $projects[$project_info['name']] = DrushMakeProject::factory($project_info);
+
+    if ($project->type == 'core') {
+      if (isset($core)) {
+        unset($projects[$core->name]);
+      }
+      $core = $project;
+    }
   }
 
   drush_print(dt('Building projects...'));

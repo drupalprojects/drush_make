@@ -17,7 +17,7 @@ class DrushMakeProject {
   /**
    * Set attributes and retrieve project information.
    */
-  function __construct($project) {
+  protected function __construct($project) {
     foreach ($project as $key => $value) {
       $this->{$key} = $value;
     }
@@ -25,6 +25,10 @@ class DrushMakeProject {
     if (!$this->downloadClass) {
       drush_error(dt('Could not find download type @type', array('@type' => $this->download['type'])));
     }
+  }
+
+  function factory($project) {
+    
   }
 
   /**
@@ -54,7 +58,7 @@ class DrushMakeProject {
           drush_print("  {$this->name} patched with {$filename}.");
         }
         else {
-          drush_set_error("  Unable to download $filename from $url.");
+          drush_set_error("Unable to download $filename from $url.");
         }
       }
     }
