@@ -68,7 +68,7 @@ class DrushMakeDownload_UpdateXML extends DrushMakeDownload {
     // Unzip the file.
     drush_shell_exec('gzip --list ' . $filename);
     $gzinfo = drush_shell_exec_output();
-    
+
     if (!count($gzinfo)) {
       drush_set_error(dt('Could not retrieve package information for @filename.', array('@filename' => $filename)));
       return;

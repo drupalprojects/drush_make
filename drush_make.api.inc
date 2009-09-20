@@ -26,7 +26,10 @@ class DrushMakeProject {
       'directory_name' => '',
     );
     if (!$project['type']) {
-      $project += self::downloadData($project);
+      if (!($data = self::downloadData($project))) {
+        return FALSE;
+      }
+      $project += $data;
     }
     include_once 'drush_make.project.' . $project['type'] . '.inc';
     $class = 'DrushMakeProject_' . $project['type'];
