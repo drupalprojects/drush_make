@@ -67,8 +67,13 @@ function drush_make($makefile = NULL, $base_path = NULL) {
   $base_path = drush_make_get_base_path($base_path);
 
   if (!empty($info['destination'])) {
+    $path = $base_path . '/_drush_make_tmp';
+    drush_op('mkdir', $path);
     drush_shell_exec('ls');
     $files = drush_shell_exec_output();
+    foreach ($files as $file) {
+      drush_shell_exec("mv ./{$file} {$path}/{$file}");
+    }
   }
 
   // Retrieve project information
@@ -120,8 +125,9 @@ function drush_make($makefile = NULL, $base_path = NULL) {
       drush_op('mkdir', $path);
     }
     foreach ($files as $file) {
-      drush_shell_exec("mv ./{$file} {$path}/{$file}");
+      drush_shell_exec("mv {$base_path}/_drush_make_tmp/{$file} {$path}/{$file}");
     }
+    drush_op('rmdir', $base_path . '/_drush_make_tmp');
   }
 
   // Tarring is enabled.
