@@ -98,10 +98,10 @@ class DrushMakeProject {
     // Generate subdirectory paths.
     if (!empty($this->subdir)) {
       foreach (explode('/', $this->subdir) as $part) {
-        if (!is_dir($part)) {
-          drush_op('mkdir', $part);
-        }
         $path .= '/' . $part;
+        if (!is_dir($path)) {
+          drush_op('mkdir', $path);
+        }
       }
     }
     return $path;
