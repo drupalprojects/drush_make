@@ -1,6 +1,8 @@
 <?php
 
-class DrushMakeDownload_UpdateXML extends DrushMakeDownload {
+include_once 'drush_make.download.get.inc';
+
+class DrushMakeDownload_UpdateXML extends DrushMakeDownload_Get {
   public function __construct(&$project) {
     parent::__construct($project);
   }
@@ -27,7 +29,7 @@ class DrushMakeDownload_UpdateXML extends DrushMakeDownload {
         $this->releases[$version][$part] = (string) $release->{'version_' . $part};
       }
     }
-    
+
     // Find the best release.
     if ($this->project->version == DRUSH_MAKE_VERSION_BEST) {
       $recommended_major = (string)$this->project->release_history->recommended_major;
@@ -41,58 +43,23 @@ class DrushMakeDownload_UpdateXML extends DrushMakeDownload {
       // Otherwise we have a full version.
     }
     $this->release = $this->releases[$this->project->version];
-    $this->version = $this->releases[$this->project->version]['version'];
+    $this->version = $this->release['version'];
+    $this->project->download['url'] = $this->release['file'];
   }
 
   function download() {
-    list($filename) = array_reverse(explode('/', $this->release['file']));
-    // Download the project.
-    if (!drush_shell_exec("wget " . $this->release['file'])) {
-      drush_shell_exec("curl -O " . $this->release['file']);
-    }
-    if (file_exists($filename)) {
-      drush_print("{$this->project->name}-{$this->version} downloaded.");
-    }
-    else {
-      drush_set_error("Unable to download $filename from " . $this->release['file']);
+    if (!($filename = $this->downloadFile())) {
       return;
     }
-    
+
     // Check Md5 hash.
     if (md5_file($filename) != $this->release['md5']) {
       drush_op('unlink', $filename);
       drush_set_error("Error: File $filename is corrupt (wrong md5 checksum).");
       return;
     }
-    
-    // Unzip the file.
-    drush_shell_exec('gzip --list ' . $filename);
-    $gzinfo = drush_shell_exec_output();
 
-    if (!count($gzinfo)) {
-      drush_set_error(dt('Could not retrieve package information for @filename.', array('@filename' => $filename)));
-      return;
-    }
-    
-    // Unzip it and then delete the tar file.
-    drush_shell_exec('gzip -d ' . $filename);
-    
-    $gzinfo = array_pop($gzinfo);
-    $matches = array();
-    preg_match('/[a-zA-Z0-9.\-_,]*.tar/', $gzinfo, $matches);
-    if (!isset($matches[0])) {
-      drush_set_error(dt('Could not retrieve tar filename from @filename for @project.', array('@project' => $this->project->name, '@filename' => $filename)));
-      return;
-    }
-    $file = $matches[0];
-
-    // Get the filename once unzipped.
-    drush_shell_exec('tar -tf ' . $file);
-    list($project_directory) = drush_shell_exec_output();
-    drush_shell_exec('tar -xf ' . $file);
-    drush_op('unlink', $file);
-
-    return $project_directory;
+    $this->unpack($filename);
   }
 
   protected function getBestRelease($major) {
