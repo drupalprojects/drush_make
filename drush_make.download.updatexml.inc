@@ -38,7 +38,8 @@ class DrushMakeDownload_UpdateXML extends DrushMakeDownload_Get {
     else {
       $exploded_version = explode('.', $this->project->version);
       if (count($exploded_version) == 1) {
-        $this->project->version = $this->getBestRelease($exploded_version);
+        list($major) = $exploded_version;
+        $this->project->version = $this->getBestRelease($major);
       }
       // Otherwise we have a full version.
     }
