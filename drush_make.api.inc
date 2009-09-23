@@ -16,6 +16,7 @@ class DrushMakeProject {
     if (!$this->downloadClass) {
       drush_error(dt('Could not find download type @type', array('@type' => $this->download['type'])));
     }
+    $this->path = $this->generatePath();
   }
 
   public static function factory($project) {
@@ -41,8 +42,17 @@ class DrushMakeProject {
    */
   function make() {
     if (empty($this->made) && $directory = $this->downloadClass->download()) {
-      $path = $this->move($directory);
-      $this->applyPatches($path);
+      if (!$this->directory_name) {
+        $this->path .= '/' . trim($directory, '/');
+      }
+      $this->fillPath($this->path);
+      if (!is_dir($this->path)) {
+        $path = $this->move($directory);
+        $this->applyPatches($path);
+      }
+      else {
+        drush_shell_exec('rm -r ' . $directory);
+      }
       // Prevent making the same project multiple times.
       $this->made = TRUE;
     }
@@ -75,14 +85,7 @@ class DrushMakeProject {
    * Move a project to its final resting place.
    */
   protected function move($project_directory) {
-    $path = $this->generatePath();
-    if ($this->directory_name) {
-      $path .= '/' . $this->directory_name;
-    }
-    else {
-      $path .= '/' . trim($project_directory, '/');
-    }
-    drush_shell_exec("mv {$project_directory} {$path}");
+    drush_shell_exec("mv {$project_directory} {$this->path}");
     return $path;
   }
 
@@ -90,21 +93,30 @@ class DrushMakeProject {
    * Generate the proper path for this project type.
    */
   protected function generatePath() {
-    $path = $this->base_path . '/' . $this->project_path;
-    // If directory doesn't exist, create it.
-    if (!is_dir($path)) {
-      drush_op('mkdir', $path);
-    }
+    $path = $this->base_path;
     // Generate subdirectory paths.
+    if (!empty($this->project_path)) {
+      $path .= '/' . $this->project_path;
+    }
     if (!empty($this->subdir)) {
-      foreach (explode('/', $this->subdir) as $part) {
-        $path .= '/' . $part;
-        if (!is_dir($path)) {
-          drush_op('mkdir', $path);
-        }
+      $path .= '/' . $this->subdir;
+    }
+    if ($this->directory_name) {
+      $this->path .= '/' . $this->directory_name;
+    }
+    $this->fillPath($path);
+    return $path;
+  }
+
+  protected function fillPath($path) {
+    $built_path = array();
+    foreach (explode('/', $path) as $part) {
+      $built_path[] = $part;
+      $current_path = implode('/', $built_path);
+      if (!is_dir($current_path)) {
+        //drush_op('mkdir', $current_path);
       }
     }
-    return $path;
   }
 
   protected static function downloadData($project) {

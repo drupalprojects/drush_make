@@ -48,11 +48,15 @@ function drush_make_drush_help($section) {
 function drush_make_get_base_path($destination = '', $reset = FALSE) {
   static $base_path;
   if (!isset($base_path) || $reset) {
+    $drupal_root = drush_get_option(array('r', 'root'), drush_locate_root());
     if (drush_get_option('tar')) {
       $base_path = drush_get_option('tar');
     }
     else if (!empty($destination)) {
       $base_path = trim($destination, '/');
+    }
+    elseif (!empty($drupal_root) && drush_valid_drupal_root($drupal_root)) {
+      $base_path = $drupal_root;
     }
     else {
       $base_path = '.';
@@ -98,8 +102,8 @@ function drush_make($makefile = NULL, $base_path = NULL) {
     );
 
     $project = $projects[$project_info['name']] = DrushMakeProject::factory($project_info);
-
     if ($project->type == 'core') {
+      unset($projects[$project->name]);
       $core = $project;
     }
   }
@@ -113,8 +117,11 @@ function drush_make($makefile = NULL, $base_path = NULL) {
 
   drush_print(dt('Building projects...'));
 
+  $drupal_root = drush_get_option(array('r', 'root'), drush_locate_root());
+  if (empty($drupal_root) || !drush_valid_drupal_root($drupal_root)) {
+    $core->make();
+  }
   // Build projects
-  $core->make();
   foreach ($projects as $project) {
     $project->make();
   }
