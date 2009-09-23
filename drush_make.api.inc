@@ -114,7 +114,7 @@ class DrushMakeProject {
       $built_path[] = $part;
       $current_path = implode('/', $built_path);
       if (!is_dir($current_path)) {
-        //drush_op('mkdir', $current_path);
+        drush_op('mkdir', $current_path);
       }
     }
   }
