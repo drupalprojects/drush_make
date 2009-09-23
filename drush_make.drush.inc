@@ -15,11 +15,17 @@ function drush_make_drush_command() {
     'callback' => 'drush_make',
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
     'examples' => array(
-      'drush make foo.make.info' => 'Make the Drupal described in foo.make.info.',
+      'drush make [script] [directory]' => 'Build the Drupal site described in [script] to [directory].',
+      'drush make foo.make bar' => 'Builds foo.make into a Drupal site in the bar/ directory.',
     ),
     'arguments' => array(
-      'path/to/script' => 'The path to the makefile. The path may be absolute or relative to the current working dir.',
-      'drupal' => 'The destination directory for the build.',
+      'script' => 'The path to the makefile. The path may be absolute or relative to the current working dir.',
+      'directory' => 'The optional destination directory for the build. If omitted, the site will be built to the current working dir.',
+    ),
+    'options' => array(
+      '--copy-settings' => 'Copy default.settings.php to settings.php in sites/default upon completion.',
+      '--tar=[file]' => 'Generate an archive of the build at [file].tar.gz instead of to a directory.',
+      '--working-copy' => 'Check out working copies of any projects that specify version control.',
     ),
   );
  
