@@ -58,8 +58,11 @@ function drush_make_get_base_path($destination = '', $reset = FALSE) {
     elseif (!empty($drupal_root) && drush_valid_drupal_root($drupal_root)) {
       $base_path = $drupal_root;
     }
-    else {
+    elseif(drush_confirm(dt("Make new site in the current directory?"))) {
       $base_path = '.';
+    }
+    else {
+      drush_die(dt("Build aborted."));
     }
   }
   return $base_path;
@@ -113,6 +116,12 @@ function drush_make($makefile = NULL, $base_path = NULL) {
       'core' => $info['core'],
       'base_path' => $base_path,
     ));
+  }
+
+  // Ensure no errors occured before starting to build. In particular this will
+  // catch situations where the update xml could not be retrieved.
+  if (drush_get_error()) {
+    drush_die();
   }
 
   drush_print(dt('Building projects...'));

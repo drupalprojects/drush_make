@@ -41,20 +41,25 @@ class DrushMakeProject {
    * Build a project.
    */
   function make() {
-    if (empty($this->made) && $directory = $this->downloadClass->download()) {
-      if (!$this->directory_name) {
-        $this->path .= '/' . trim($directory, '/');
-      }
-      $this->fillPath($this->path);
-      if (!is_dir($this->path)) {
-        $path = $this->move($directory);
-        $this->applyPatches($path);
+    if (empty($this->made)) {
+      if ($directory = $this->downloadClass->download()) {
+        $this->fillPath($this->path);
+        // Check is the directory is not there, perhaps the module already exits.
+        if (!is_dir($this->path .'/'. $directory)) {
+          $directory = rtrim($directory, '/');
+          $path = $this->move($directory);
+          $this->applyPatches($path);
+        }
+        else {
+          drush_set_error(dt('Directory not empty: '). $directory);
+          drush_shell_exec('rm -r ' . $directory);
+        }
+        // Prevent making the same project multiple times.
+        $this->made = TRUE;
       }
       else {
-        drush_shell_exec('rm -r ' . $directory);
+        drush_set_error(dt('Download failed'));
       }
-      // Prevent making the same project multiple times.
-      $this->made = TRUE;
     }
   }
 
@@ -104,7 +109,6 @@ class DrushMakeProject {
     if ($this->directory_name) {
       $this->path .= '/' . $this->directory_name;
     }
-    $this->fillPath($path);
     return $path;
   }
 
