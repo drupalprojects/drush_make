@@ -60,7 +60,7 @@ class DrushMakeDownload_UpdateXML extends DrushMakeDownload_Get {
       return;
     }
 
-    $this->unpack($filename);
+    return $this->unpack($filename);
   }
 
   protected function getBestRelease($major) {

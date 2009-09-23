@@ -65,9 +65,10 @@ class DrushMakeDownload_Get extends DrushMakeDownload {
   }
 
   function download() {
-    if ($filename = $this->downloadFile() {
-      $this->unpack($filename);
+    if ($filename = $this->downloadFile()) {
+      return $this->unpack($filename);
     }
+    return FALSE;
   }
 
   protected function downloadFile() {
