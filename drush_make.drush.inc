@@ -51,7 +51,7 @@ function drush_make_get_base_path($destination = '') {
   if (drush_get_option('tar')) {
     $base_path = drush_get_option('tar');
   }
-  elseif (!empty($destination)) {
+  elseif (!empty($destination) || $destination == '.') {
     $base_path = trim($destination, '/');
   }
   elseif(drush_confirm(dt("Make new site in the current directory?"))) {
