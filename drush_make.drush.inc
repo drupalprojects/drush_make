@@ -65,25 +65,48 @@ function drush_make_get_base_path($destination = '') {
 }
 
 /**
+ * Generate a temporary build path and ensure that it's available.
+ *
+ * @param $base_path
+ *   The base path of the build.
+ * @param $tem_dir
+ *   Name to use for a temprorary directory.
+ *
+ * @return path to use for the build.
+ */
+function drush_make_get_temp_path($base_path, $temp_dir) {
+  $temp_base = $base_path;
+  if (!drush_get_option('no-tmp')) {
+    if (!file_exists($temp_dir)) {
+      if ($base_path == '.') {
+        $temp_base = $temp_dir;
+      }
+      else {
+        $temp_base = "{$temp_dir}/{$base_path}";
+      }
+    }
+    else {
+      drush_set_error("DRUSH_MAKE_ERROR", dt("Couldn't make temporary directory."));
+      return;
+    }
+  }
+  return $temp_base;
+}
+
+/**
  * Drush callback; make based on the makefile.
  */
 function drush_make($makefile = NULL, $base_path = NULL) {
   if ($info = drush_make_get_info($makefile)) {
     if ($base_path = drush_make_get_base_path($base_path)) {
-      $temp_base = $base_path;
-      if (!drush_get_option('no-tmp')) {
-        // Generate a temporary directory.
-        $temp_dir = 'tmp'. time();
-        if (file_exists($temp_dir)) {
-          drush_set_error("DRUSH_MAKE_ERROR", dt("Couldn't make temporary directory."));
-          return;
-        }
-        $temp_base = "{$temp_dir}/{$base_path}";
-      }
-
+      $temp_dir = 'tmp'. time();
+      $temp_base = drush_make_get_temp_path($base_path, $temp_dir);
       $build_path = drush_get_option('destination');
-      if (empty($build_path)) {
+      if (!isset($build_path)) {
         $build_path = 'sites/all';
+      }
+      elseif ($build_path === true) {
+        $build_path = '';
       }
 
       drush_make_build($info, $temp_base, $build_path);
@@ -100,7 +123,7 @@ function drush_make($makefile = NULL, $base_path = NULL) {
 
       // If we're working in a temporary directory, move things into place and
       // clean up.
-      if (isset($temp_dir)) {
+      if ($temp_dir != $base_path) {
         if ($base_path == '.') {
           drush_shell_exec("mv {$temp_base}/* .");
           drush_shell_exec("mv {$temp_base}/.* .");
