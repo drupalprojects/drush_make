@@ -26,6 +26,8 @@ function drush_make_drush_command() {
       '--copy-settings' => 'Copy default.settings.php to settings.php in sites/default upon completion.',
       '--tar=[file]' => 'Generate an archive of the build at [file].tar.gz instead of to a directory.',
       '--working-copy' => 'Check out working copies of any projects that specify version control.',
+      '--destination=[path]' => 'The location in the platform where modules and themes will be placed. Defaults to "sites/all".',
+      '--no-tmp' => 'Do no stage the build in a temporary directory (For internal use).',
     ),
   );
  
@@ -56,8 +58,8 @@ function drush_make_get_base_path($destination = '') {
     $base_path = '.';
   }
   else {
-    drush_print(dt('Build aborted.'));
-    return FALSE;
+    drush_log(dt('Build aborted.'), 'ok');
+    return;
   }
   return $base_path;
 }
@@ -66,17 +68,25 @@ function drush_make_get_base_path($destination = '') {
  * Drush callback; make based on the makefile.
  */
 function drush_make($makefile = NULL, $base_path = NULL) {
-  $temp_dir = 'tmp'. time();
-  if (file_exists($temp_dir)) {
-    drush_set_error("DRUSH_MAKE_ERROR", dt("Couldn't make temporary directory."));
-    return;
-  }
-
-  // Start the build.
   if ($info = drush_make_get_info($makefile)) {
     if ($base_path = drush_make_get_base_path($base_path)) {
-      $temp_base = "{$temp_dir}/{$base_path}";
-      drush_make_build($info, $temp_base);
+      $temp_base = $base_path;
+      if (!drush_get_option('no-tmp')) {
+        // Generate a temporary directory.
+        $temp_dir = 'tmp'. time();
+        if (file_exists($temp_dir)) {
+          drush_set_error("DRUSH_MAKE_ERROR", dt("Couldn't make temporary directory."));
+          return;
+        }
+        $temp_base = "{$temp_dir}/{$base_path}";
+      }
+
+      $build_path = drush_get_option('destination');
+      if (empty($build_path)) {
+        $build_path = 'sites/all';
+      }
+
+      drush_make_build($info, $temp_base, $build_path);
 
       // Copy settings.php.
       if (drush_get_option('copy-settings')) {
@@ -88,18 +98,23 @@ function drush_make($makefile = NULL, $base_path = NULL) {
         drush_shell_exec("tar -Pcf -  --transform='s,{$temp_base},{$base_path},' {$temp_base} | gzip > {$base_path}.tar.gz");
       }
 
-      if ($base_path == '.') {
-        drush_shell_exec("mv {$temp_base}/* .");
-        drush_shell_exec("mv {$temp_base}/.* .");
+      // If we're working in a temporary directory, move things into place and
+      // clean up.
+      if (isset($temp_dir)) {
+        if ($base_path == '.') {
+          drush_shell_exec("mv {$temp_base}/* .");
+          drush_shell_exec("mv {$temp_base}/.* .");
+        }
+        elseif (file_exists($base_path)) {
+          drush_set_error("DRUSH_MAKE_ERROR", dt("Could not move build into place. Directory already exists: ". $base_path));
+          return;
+        }
+        else {
+          drush_shell_exec("mv $temp_base $base_path");
+        }
+        drush_shell_exec("rm -r $temp_dir");
       }
-      elseif (file_exists($base_path)) {
-        drush_set_error("DRUSH_MAKE_ERROR", dt("Could not move build into place. Directory already exists: ". $base_path));
-        return;
-      }
-      else {
-        drush_shell_exec("mv $temp_base $base_path");
-      }
-      drush_shell_exec("rm -r $temp_dir");
+      drush_log(dt("Build complete."), 'completed');
     }
   }
 }
@@ -111,10 +126,8 @@ function drush_make($makefile = NULL, $base_path = NULL) {
  *   $info array as returned by drush_make_get_info()
  * @param $base_path
  *   The path where the platform will be assembled
- * @param $build_path
- *   The path where this set of packages be assembled.
  */
-function drush_make_build($info, $base_path, $build_path = 'sites/all') {
+function drush_make_build($info, $base_path, $build_path) {
 
   // Retrieve project information
   $projects = array();

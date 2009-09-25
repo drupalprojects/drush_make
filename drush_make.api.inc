@@ -33,12 +33,18 @@ class DrushMakeProject {
           $this->applyPatches($path);
 
           // If the project itself containes any make file, build them too.
-          $make_files = drush_scan_directory($path, '.make.txt');
+          $make_files = drush_scan_directory($path, '.make');
           $build_path = $this->generatePath(FALSE) ."/". $directory;
           foreach ($make_files as $file) {
-            if ($info = drush_make_get_info($file->filename)) {
-              drush_make_build($info, $this->base_path, $build_path);
+            $data = array();
+            $data[] = $file->filename;
+            $data[] = $this->base_path;
+            $data['destination'] = $build_path;
+            $data['no-tmp'] = TRUE;
+            if (drush_get_option('working-copy')) {
+              $data['working-copy'] = TRUE;
             }
+            drush_backend_invoke("make", $data);
           }
         }
         else {
