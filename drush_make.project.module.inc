@@ -9,6 +9,6 @@ class DrushMakeProject_Module extends DrushMakeProject {
     else {
         $this->project_path = 'modules';
     }
-    parent::__construct($project);
+    parent::__construct($project, $build_path);
   }
 }

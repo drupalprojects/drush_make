@@ -9,6 +9,6 @@ class DrushMakeProject_Theme extends DrushMakeProject {
     else {
         $this->project_path = 'themes';
     }
-    parent::__construct($project);
+    parent::__construct($project, $build_path);
   }
 }

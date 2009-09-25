@@ -8,7 +8,7 @@ class DrushMakeProject {
   /**
    * Set attributes and retrieve project information.
    */
-  protected function __construct($project) {
+  protected function __construct($project, $build_path) {
     foreach ($project as $key => $value) {
       $this->{$key} = $value;
     }
