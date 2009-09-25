@@ -1,7 +1,8 @@
 <?php
+// $Id$
 
 class DrushMakeProject_Core extends DrushMakeProject {
-  public function __construct(&$project) {
+  public function __construct(&$project, $build_path) {
     parent::__construct($project);
   }
   protected function move($project_directory) {

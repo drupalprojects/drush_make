@@ -45,25 +45,19 @@ function drush_make_drush_help($section) {
 /**
  * Establish the destination base_path for this build.
  */
-function drush_make_get_base_path($destination = '', $reset = FALSE) {
-  static $base_path;
-  if (!isset($base_path) || $reset) {
-    $drupal_root = drush_get_option(array('r', 'root'), drush_locate_root());
-    if (drush_get_option('tar')) {
-      $base_path = drush_get_option('tar');
-    }
-    else if (!empty($destination)) {
-      $base_path = trim($destination, '/');
-    }
-    elseif (!empty($drupal_root) && drush_valid_drupal_root($drupal_root)) {
-      $base_path = $drupal_root;
-    }
-    elseif(drush_confirm(dt("Make new site in the current directory?"))) {
-      $base_path = '.';
-    }
-    else {
-      drush_die(dt("Build aborted."));
-    }
+function drush_make_get_base_path($destination = '') {
+  if (drush_get_option('tar')) {
+    $base_path = drush_get_option('tar');
+  }
+  elseif (!empty($destination)) {
+    $base_path = trim($destination, '/');
+  }
+  elseif(drush_confirm(dt("Make new site in the current directory?"))) {
+    $base_path = '.';
+  }
+  else {
+    drush_print(dt('Build aborted.'));
+    return FALSE;
   }
   return $base_path;
 }
@@ -72,90 +66,148 @@ function drush_make_get_base_path($destination = '', $reset = FALSE) {
  * Drush callback; make based on the makefile.
  */
 function drush_make($makefile = NULL, $base_path = NULL) {
-  if (!($info = drush_make_get_info($makefile))) {
+  $temp_dir = 'tmp'. time();
+  if (file_exists($temp_dir)) {
+    drush_set_error("DRUSH_MAKE_ERROR", dt("Couldn't make temporary directory."));
     return;
   }
 
-  drush_print(dt('Getting project information...'));
-  $base_path = drush_make_get_base_path($base_path);
+  // Start the build.
+  if ($info = drush_make_get_info($makefile)) {
+    if ($base_path = drush_make_get_base_path($base_path)) {
+      $temp_base = "{$temp_dir}/{$base_path}";
+      drush_make_build($info, $temp_base);
 
-  if (!empty($info['destination'])) {
-    $path = $base_path . '/_drush_make_tmp';
-    drush_op('mkdir', $path);
-    drush_shell_exec('ls');
-    $files = drush_shell_exec_output();
-    foreach ($files as $file) {
-      drush_shell_exec("mv ./{$file} {$path}/{$file}");
+      // Copy settings.php.
+      if (drush_get_option('copy-settings')) {
+        drush_shell_exec("cp {$temp_base}/sites/default/default.settings.php {$temp_base}/sites/default/settings.php");
+      }
+
+      // Tarring is enabled.
+      if (drush_get_option('tar')) {
+        drush_shell_exec("tar -Pcf -  --transform='s,{$temp_base},{$base_path},' {$temp_base} | gzip > {$base_path}.tar.gz");
+      }
+
+      if ($base_path == '.') {
+        drush_shell_exec("mv {$temp_base}/* .");
+        drush_shell_exec("mv {$temp_base}/.* .");
+      }
+      elseif (file_exists($base_path)) {
+        drush_set_error("DRUSH_MAKE_ERROR", dt("Could not move build into place. Directory already exists: ". $base_path));
+        return;
+      }
+      else {
+        drush_shell_exec("mv $temp_base $base_path");
+      }
+      drush_shell_exec("rm -r $temp_dir");
     }
   }
+}
+
+/**
+ * Build a platform based on a make file.
+ *
+ * @param $info
+ *   $info array as returned by drush_make_get_info()
+ * @param $base_path
+ *   The path where the platform will be assembled
+ * @param $build_path
+ *   The path where this set of packages be assembled.
+ */
+function drush_make_build($info, $base_path, $build_path = 'sites/all') {
 
   // Retrieve project information
   $projects = array();
-
   foreach ($info['projects'] as $project => $project_info) {
     // Cover if there is no project info, it's just a project name.
     if (is_string($project_info) && is_numeric($project)) {
       $project = $project_info;
       $project_info = array();
     }
+    // Merge the known data onto the project info.
     $project_info += array(
       'name'      => $project,
       'core'      => $info['core'],
       'base_path' => $base_path,
     );
 
-    $project = $projects[$project_info['name']] = DrushMakeProject::factory($project_info);
+    $project = $projects[$project_info['name']] = drush_make_project_factory($project_info, $build_path);
     if ($project->type == 'core') {
       unset($projects[$project->name]);
       $core = $project;
     }
   }
-  if (!isset($core)) {
-    $core = DrushMakeProject::factory(array(
-      'name' => 'drupal',
-      'core' => $info['core'],
-      'base_path' => $base_path,
-    ));
-  }
 
   // Ensure no errors occured before starting to build. In particular this will
   // catch situations where the update xml could not be retrieved.
   if (drush_get_error()) {
-    drush_die();
+    return;
   }
 
-  drush_print(dt('Building projects...'));
-
-  $drupal_root = drush_get_option(array('r', 'root'), drush_locate_root());
-  if (empty($drupal_root) || !drush_valid_drupal_root($drupal_root)) {
+  // Core is a special case, we need to set it up first thing.
+  if (isset($core)) {
     $core->make();
   }
   // Build projects
   foreach ($projects as $project) {
     $project->make();
   }
+}
 
-  // Copy settings.php.
-  if (drush_get_option('copy-settings')) {
-    drush_shell_exec("cp {$base_path}/sites/default/default.settings.php {$base_path}/sites/default/settings.php");
+/**
+ * Project object factory.
+ *
+ * @param $project
+ *   The project info array.
+ *
+ * @return a DrushMakeProject_TYPE object.
+ */
+function drush_make_project_factory($project, $build_path) {
+  $project += array(
+    'version' => DRUSH_MAKE_VERSION_BEST,
+    'location' => DRUSH_MAKE_UPDATE_DEFAULT_URL,
+    'subdir' => '',
+  );
+  if (empty($project['type'])) {
+    if (!($data = drush_make_download_data($project))) {
+      return FALSE;
+    }
+    $project += $data;
+  }
+  if (!empty($project['type'])) {
+    include_once 'drush_make.project.' . $project['type'] . '.inc';
+    $class = 'DrushMakeProject_' . $project['type'];
+    return new $class($project, $build_path);
+  }
+  return FALSE;
+}
+
+/**
+ * Retrieve and process update xml.
+ *
+ * @param $project
+ *   The project info array.
+ *
+ * @return
+ *   Array of 'release_histroy' and 'type' info that can be added to the
+ *   project info array.
+ */
+function drush_make_download_data($project) {
+  // First, get the release history.
+  @$release_history = simplexml_load_file($project['location'] . '/' . $project['name'] . '/' . $project['core']);
+  if (!$release_history) {
+    drush_set_error(dt("Could not retrieve version information for @project.", array('@project' => $project['name'])));
+    return;
   }
 
-
-  if (!empty($info['destination'])) {
-    $path = $base_path . '/' . $info['destination'];
-    if (!is_dir($path)) {
-      drush_op('mkdir', $path);
+  // Determine the project type.
+  $term_map = array('Modules' => 'module', 'Themes' => 'theme', 'Drupal project' => 'core', 'Installation profiles' => 'profile');
+  // Iterate through all terms related to this project.
+  foreach ($release_history->terms->term as $term) {
+    // If the term is eather 'Modules' or 'Themes', add it.
+    if (in_array((string) $term->value, array_keys($term_map))) {
+      return array('release_history' => $release_history, 'type' => $term_map[(string)$term->value]);
     }
-    foreach ($files as $file) {
-      drush_shell_exec("mv {$base_path}/_drush_make_tmp/{$file} {$path}/{$file}");
-    }
-    drush_op('rmdir', $base_path . '/_drush_make_tmp');
-  }
-
-  // Tarring is enabled.
-  if (drush_get_option('tar')) {
-    drush_shell_exec("tar -czf $base_path.tar.gz $base_path");
-    drush_shell_exec('rm -r ' . $base_path);
   }
 }
 
