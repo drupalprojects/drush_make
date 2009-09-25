@@ -2,9 +2,6 @@
 // $Id$
 
 class DrushMakeDownload_Git extends DrushMakeDownload {
-  public function __construct(&$project) {
-    parent::__construct($project);
-  }
 
   function download() {
     // @TODO implement revisions, tags

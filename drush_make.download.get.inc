@@ -2,9 +2,6 @@
 // $Id$
 
 class DrushMakeDownload_Get extends DrushMakeDownload {
-  public function __construct(&$project) {
-    parent::__construct($project);
-  }
 
   protected function unpack($filename) {
     if (drush_get_context('DRUSH_SIMULATE')) {

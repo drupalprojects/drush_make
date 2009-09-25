@@ -2,9 +2,6 @@
 // $Id$
 
 class DrushMakeDownload_CVS extends DrushMakeDownload {
-  public function __construct(&$project) {
-    parent::__construct($project);
-  }
 
   function download() {
     if (isset($this->project->download['module'])) {

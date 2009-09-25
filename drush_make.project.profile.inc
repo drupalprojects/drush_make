@@ -2,8 +2,8 @@
 // $Id$
 
 class DrushMakeProject_Profile extends DrushMakeProject {
-  public function __construct(&$project, $build_path) {
+  public function __construct(&$project, $paths) {
     $this->project_path = 'profiles';
-    parent::__construct($project, $build_path);
+    parent::__construct($project, $paths);
   }
 }

@@ -4,9 +4,6 @@
 include_once 'drush_make.download.get.inc';
 
 class DrushMakeDownload_UpdateXML extends DrushMakeDownload_Get {
-  public function __construct(&$project) {
-    parent::__construct($project);
-  }
 
   function preDownload() {
     // Make an array of releases.

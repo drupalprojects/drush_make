@@ -2,13 +2,13 @@
 // $Id$
 
 class DrushMakeProject_Theme extends DrushMakeProject {
-  public function __construct(&$project, $build_path) {
-    if (!empty($build_path)) {
-      $this->project_path = $build_path .'/themes';
+  public function __construct(&$project, $paths) {
+    if (!empty($paths['build'])) {
+      $this->project_path = $paths['build'] .'/themes';
     }
     else {
         $this->project_path = 'themes';
     }
-    parent::__construct($project, $build_path);
+    parent::__construct($project, $paths);
   }
 }

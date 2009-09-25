@@ -8,11 +8,11 @@ class DrushMakeProject {
   /**
    * Set attributes and retrieve project information.
    */
-  protected function __construct($project, $build_path) {
+  function __construct($project, $paths) {
     foreach ($project as $key => $value) {
       $this->{$key} = $value;
     }
-    $this->downloadClass = DrushMakeDownload::factory($this);
+    $this->downloadClass = DrushMakeDownload::factory($this, $paths);
     if (!$this->downloadClass) {
       drush_error(dt('Could not find download type @type', array('@type' => $this->download['type'])));
     }
@@ -128,7 +128,7 @@ class DrushMakeDownload {
   var $project;
   var $path;
 
-  protected function __construct($project) {
+  function __construct($project, $paths) {
     $this->project = $project;
     $this->path = !empty($this->project->directory_name) ? $this->project->directory_name : $this->project->name;
     $this->preDownload();
@@ -141,7 +141,7 @@ class DrushMakeDownload {
     include_once 'drush_make.download.' . $project->download['type'] . '.inc';
     $class = 'DrushMakeDownload_' . $project->download['type'];
     if (class_exists($class)) {
-      return new $class($project);
+      return new $class($project, $paths);
     }
     else {
       return FALSE;

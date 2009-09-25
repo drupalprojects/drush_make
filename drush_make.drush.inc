@@ -52,7 +52,7 @@ function drush_make_drush_help($section) {
  *
  * @return an array of paths with keys 'base', 'build', 'temp_base', 'temp_dir', .
  */
-function drush_make_get_base_path($destination = '') {
+function drush_make_get_paths($destination = '') {
   $paths = array();
 
   // Determine the base of the build.
@@ -107,9 +107,9 @@ function drush_make_get_base_path($destination = '') {
  */
 function drush_make($makefile = NULL, $base_path = NULL) {
   if ($info = drush_make_get_info($makefile)) {
-    if ($paths = drush_make_get_base_path($base_path)) {
+    if ($paths = drush_make_get_paths($base_path)) {
 
-      drush_make_build($info, $paths['temp_base'], $paths['build']);
+      drush_make_build($info, $paths);
 
       // Copy settings.php.
       if (drush_get_option('copy-settings')) {
@@ -147,13 +147,13 @@ function drush_make($makefile = NULL, $base_path = NULL) {
  *
  * @param $info
  *   $info array as returned by drush_make_get_info()
- * @param $base_path
- *   The path where the platform will be assembled
- * @param $build_path
- *   Path for modules, themes and libraries that are part of the build.
+ * @param $paths
+ *   The paths array for the build.
  */
-function drush_make_build($info, $base_path, $build_path) {
-
+function drush_make_build($info, $paths) {
+  $base_path = $paths['temp_base'];
+  $build_path = $paths['build'];
+  
   // Retrieve project information
   $projects = array();
   foreach ($info['projects'] as $project => $project_info) {
@@ -169,7 +169,7 @@ function drush_make_build($info, $base_path, $build_path) {
       'base_path' => $base_path,
     );
 
-    $project = $projects[$project_info['name']] = drush_make_project_factory($project_info, $build_path);
+    $project = $projects[$project_info['name']] = drush_make_project_factory($project_info, $paths);
     if ($project->type == 'core') {
       unset($projects[$project->name]);
       $core = $project;
@@ -213,7 +213,7 @@ function drush_make_build($info, $base_path, $build_path) {
  *
  * @return a DrushMakeProject_TYPE object.
  */
-function drush_make_project_factory($project, $build_path) {
+function drush_make_project_factory($project, $paths) {
   $project += array(
     'version' => DRUSH_MAKE_VERSION_BEST,
     'location' => DRUSH_MAKE_UPDATE_DEFAULT_URL,
@@ -228,7 +228,7 @@ function drush_make_project_factory($project, $build_path) {
   if (!empty($project['type'])) {
     include_once 'drush_make.project.' . $project['type'] . '.inc';
     $class = 'DrushMakeProject_' . $project['type'];
-    return new $class($project, $build_path);
+    return new $class($project, $paths);
   }
   return FALSE;
 }

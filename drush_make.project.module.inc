@@ -2,13 +2,13 @@
 // $Id$
 
 class DrushMakeProject_Module extends DrushMakeProject {
-  public function __construct(&$project, $build_path) {
-    if (!empty($build_path)) {
-      $this->project_path = $build_path .'/modules';
+  public function __construct(&$project, $paths) {
+    if (!empty($paths['build'])) {
+      $this->project_path = $paths['build'] .'/modules';
     }
     else {
         $this->project_path = 'modules';
     }
-    parent::__construct($project, $build_path);
+    parent::__construct($project, $paths);
   }
 }
