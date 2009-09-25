@@ -150,7 +150,7 @@ function drush_make($makefile = NULL, $base_path = NULL) {
  * @param $base_path
  *   The path where the platform will be assembled
  * @param $build_path
- *   Path for modules and themes that are part of the build.
+ *   Path for modules, themes and libraries that are part of the build.
  */
 function drush_make_build($info, $base_path, $build_path) {
 
@@ -189,6 +189,19 @@ function drush_make_build($info, $base_path, $build_path) {
   // Build projects
   foreach ($projects as $project) {
     $project->make();
+  }
+
+  // Retrieve library information and assemble.
+  if (!empty($info['libraries'])) {
+    foreach ($info['libraries'] as $name => $library_info) {
+      $library_info += array(
+        'name'      => $name,
+        'base_path' => $base_path,
+        'type'      => 'library',
+      );
+      $library = drush_make_project_factory($library_info, $build_path);
+      $library->make();
+    }
   }
 }
 
