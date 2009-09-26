@@ -88,6 +88,10 @@ class DrushMakeProject {
    */
   protected function move($project_directory) {
     drush_shell_exec("mv {$project_directory} {$this->path}");
+    if (!empty($this->directory_name)) {
+      drush_shell_exec("mv {$this->path}/{$project_directory} {$this->path}/{$this->directory_name}");
+      $project_directory = $this->directory_name;
+    }
     return "{$this->path}/{$project_directory}";
   }
 
