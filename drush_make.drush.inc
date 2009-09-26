@@ -199,7 +199,7 @@ function drush_make_build($info, $paths) {
         'base_path' => $base_path,
         'type'      => 'library',
       );
-      $library = drush_make_project_factory($library_info, $build_path);
+      $library = drush_make_project_factory($library_info, $paths);
       $library->make();
     }
   }
