@@ -19,7 +19,7 @@ function drush_make_drush_command() {
       'drush make foo.make bar' => 'Builds foo.make in the bar/ directory.',
     ),
     'arguments' => array(
-      'script' => 'The path to the makefile. The path may be absolute or relative to the current working dir.',
+      'script' => 'The path or URL of the makefile. The path may be absolute or relative to the current working dir.',
       'directory' => 'The optional destination directory for the build. If omitted, the site will be built to the current working dir.',
     ),
     'options' => array(
@@ -271,15 +271,14 @@ function drush_make_get_info($makefile) {
     drush_set_error(dt('Please specify a makefile.'));
     return;
   }
-  elseif (!file_exists($makefile)) {
+  elseif (!file_exists($makefile) && !drush_make_valid_url($makefile )) {
     drush_set_error(dt('The specified makefile doesn\'t exist.'));
     return;
   }
-  elseif (!($info = drush_make_parse_info_file($makefile))) {
-    drush_set_error(dt('The specified makefile doesn\'t exist.'));
-    return;
-  }
-  elseif (empty($info['projects'])) {
+
+  $info = drush_make_parse_info_file($makefile);
+
+  if (empty($info['projects'])) {
     drush_set_error(dt('The specified makefile doesn\'t have any projects.'));
     return;
   }
@@ -293,16 +292,18 @@ function drush_make_get_info($makefile) {
 /**
  * Parse Drupal info file format.
  *
- * Copied verbatim from includes/common.inc
+ * Copied verbatim from includes/common.inc, with the exception that this 
+ * does not check that the file exists locally. The commented out code is the
+ * only change.
  *
  * @see drupal_parse_info_file
  */
 function drush_make_parse_info_file($filename) {
   $info = array();
 
-  if (!file_exists($filename)) {
-    return $info;
-  }
+  // if (!file_exists($filename)) {
+  //   return $info;
+  // }
 
   $data = file_get_contents($filename);
   if (preg_match_all('
@@ -356,4 +357,35 @@ function drush_make_parse_info_file($filename) {
   }
 
   return $info;
+}
+
+/**
+ * Verify the syntax of the given URL.
+ *
+ * Copied verbatim from includes/common.inc
+ *
+ * @see valid_url
+ */
+function drush_make_valid_url($url, $absolute = FALSE) {
+  if ($absolute) {
+    return (bool)preg_match("
+      /^                                                      # Start at the beginning of the text
+      (?:ftp|https?):\/\/                                     # Look for ftp, http, or https schemes
+      (?:                                                     # Userinfo (optional) which is typically
+        (?:(?:[\w\.\-\+!$&'\(\)*\+,;=]|%[0-9a-f]{2})+:)*      # a username or a username and password
+        (?:[\w\.\-\+%!$&'\(\)*\+,;=]|%[0-9a-f]{2})+@          # combination
+      )?
+      (?:
+        (?:[a-z0-9\-\.]|%[0-9a-f]{2})+                        # A domain name or a IPv4 address
+        |(?:\[(?:[0-9a-f]{0,4}:)*(?:[0-9a-f]{0,4})\])         # or a well formed IPv6 address
+      )
+      (?::[0-9]+)?                                            # Server port number (optional)
+      (?:[\/|\?]
+        (?:[\w#!:\.\?\+=&@$'~*,;\/\(\)\[\]\-]|%[0-9a-f]{2})   # The path and query (optional)
+      *)?
+    $/xi", $url);
+  }
+  else {
+    return (bool)preg_match("/^(?:[\w#!:\.\?\+=&@$'~*,;\/\(\)\[\]\-]|%[0-9a-f]{2})+$/i", $url);
+  }
 }
