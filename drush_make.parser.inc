@@ -79,3 +79,96 @@ function _drush_make_parser_tokenize($data, &$tokens, &$last_newline) {
     $tokens[] = array('type' => DRUSH_MAKE_TOKEN_LITERAL, 'data' => $token);
   }
 }
+
+function drush_make_parser_parse($tokens) {
+  $commands = _drush_make_parser_extract_commands($tokens);
+  return $commands;
+}
+
+function _drush_make_parser_extract_commands($tokens) {
+  $commands = array();
+  $in_comment = FALSE;
+
+  $in_assignment = 0; // Tri-state variable: 0 - not in assignment,
+                      // 1: looking for [ or =, 2: looking for ], 3: value.
+  $assignment_key = array();
+  $current_key = '';
+
+  $in_scope_assignment = FALSE;
+  $scope_assignment = array();
+
+  foreach ($tokens as $token) {
+    if ($token['type'] == DRUSH_MAKE_TOKEN_COMMAND && ($token['data'] == ';' || $token['data'] == '#')) {
+      $in_comment = TRUE;
+    }
+    elseif ($in_comment && $token['type'] == DRUSH_MAKE_TOKEN_NEWLINE) {
+      $in_comment = FALSE;
+    }
+    if (!$in_comment && $token['type'] != DRUSH_MAKE_TOKEN_NEWLINE) {
+
+      // If it's a literal, assume it's the start of an assignment.
+      if (!$in_assignment && $token['type'] == DRUSH_MAKE_TOKEN_LITERAL && $in_scope_assignment != 2) {
+        // Start off the key with the current literal.
+        $assignment_key = array($token['data']);
+        // Set the current marker to look for a key.
+        $in_assignment = 1;
+      }
+      elseif ($token['type'] == DRUSH_MAKE_TOKEN_LITERAL && $in_assignment == 2) {
+        $current_key = $token['data'];
+      }
+      elseif ($token['type'] == DRUSH_MAKE_TOKEN_COMMAND && $token['data'] == '=' && $in_assignment == 1) {
+        // If it's looking for a key and finds an equal sign, look for a value now.
+        $in_assignment = 3;
+      }
+      elseif ($token['type'] == DRUSH_MAKE_TOKEN_COMMAND && $token['data'] == '[' && $in_assignment == 1) {
+        $in_assignment = 2;
+      }
+      elseif ($token['type'] == DRUSH_MAKE_TOKEN_COMMAND && $token['data'] == ']' && $in_assignment == 2) {
+        $assignment_key[] = $current_key;
+        $current_key = '';
+        $in_key = FALSE;
+        $in_assignment = 1;
+      }
+      elseif ($in_assignment == 1 || $in_assignment == 2) {
+        return array('error' => TRUE, 'message' => 'Unexpected token "' . $token['data'] . '" in assignment.');
+      }
+      elseif ($in_assignment == 3) {
+        if ($token['type'] == DRUSH_MAKE_TOKEN_LITERAL) {
+          $assignment = array('type' => DRUSH_MAKE_COMMAND_ASSIGNMENT, 'key' => $assignment_key, 'value' => $token['data']);
+          if ($in_scope_assignment) {
+            $scope_assignment[] = $assignment;
+          }
+          else {
+            $commands[] = $assignment;
+          }
+          $in_assignment = 0;
+        }
+        else {
+          return array('error' => TRUE, 'message' => 'Unexpected token "' . $token['data'] . '" in assignment.');
+        }
+      }
+
+      elseif ($token['type'] == DRUSH_MAKE_TOKEN_COMMAND && $token['data'] == '(' && $in_scope_assignment == 0) {
+        $in_scope_assignment = 1;
+      }
+      elseif ($in_scope_assignment == 1 && $token['type'] == DRUSH_MAKE_TOKEN_COMMAND && $token['data'] == ')') {
+        $in_scope_assignment = 2;
+        $commands[] = array('type' => DRUSH_MAKE_COMMAND_BEGIN_SCOPE, 'scope' => $scope_assignment);
+        $scope_assignment = array();
+      }
+      elseif ($in_scope_assignment == 1) {
+        return array('error' => TRUE, 'message' => 'Unexpected token "' . $token['data'] . '" in scope assignment.');
+      }
+      elseif ($in_scope_assignment == 2 && ($token['type'] != DRUSH_MAKE_TOKEN_COMMAND || $token['data'] != '{')) {
+        return array('error' => TRUE, 'message' => 'A "{" must follow ")".');
+      }
+      elseif ($in_scope_assignment == 2 && $token['type'] == DRUSH_MAKE_TOKEN_COMMAND && $token['data'] == '{') {
+        $in_scope_assignment = 0;
+      }
+      elseif ($token['type'] == DRUSH_MAKE_TOKEN_COMMAND && $token['data'] == '}') {
+        $commands[] = array('type' => DRUSH_MAKE_COMMAND_END_SCOPE);
+      }
+    }
+  }
+  return $commands;
+}
