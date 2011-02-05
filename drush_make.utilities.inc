@@ -24,7 +24,12 @@ function drush_make_parse_info_file($makefile, $parsed = TRUE) {
   if (!($data = drush_make_get_data($makefile))) {
     return drush_set_error(dt('Invalid or empty make file: %makefile', array('%makefile' => $makefile)));
   }
-  if (!($info = _drush_make_parse_info_file($data))) {
+
+  include_once 'drush_make.parser.inc';
+  $tokens = drush_make_parser_tokenize($data);
+  $info = drush_make_parser_parse($tokens);
+
+  if (!$info) {
     return FALSE;
   }
   if (!empty($info['includes'])) {
@@ -47,7 +52,9 @@ function drush_make_parse_info_file($makefile, $parsed = TRUE) {
     }
     $includes[] = $data;
     $data = implode("\n", $includes);
-    $info = _drush_make_parse_info_file($data);
+    include_once 'drush_make.parser.inc';
+    $tokens = drush_make_parser_tokenize($data);
+    $info = drush_make_parser_parse($tokens);
   }
   if ($parsed) {
     return $info;
@@ -55,65 +62,6 @@ function drush_make_parse_info_file($makefile, $parsed = TRUE) {
   else {
     return $data;
   }
-}
-
-function _drush_make_parse_info_file($data) {
-  if (!$data) {
-    return FALSE;
-  }
-
-  if (preg_match_all('
-    @^\s*                           # Start at the beginning of a line, ignoring leading whitespace
-    ((?:
-      [^=;\[\]]|                    # Key names cannot contain equal signs, semi-colons or square brackets,
-      \[[^\[\]]*\]                  # unless they are balanced and not nested
-    )+?)
-    \s*=\s*                         # Key/value pairs are separated by equal signs (ignoring white-space)
-    (?:
-      ("(?:[^"]|(?<=\\\\)")*")|     # Double-quoted string, which may contain slash-escaped quotes/slashes
-      (\'(?:[^\']|(?<=\\\\)\')*\')| # Single-quoted string, which may contain slash-escaped quotes/slashes
-      ([^\r\n]*?)                   # Non-quoted string
-    )\s*$                           # Stop at the next end of a line, ignoring trailing whitespace
-    @msx', $data, $matches, PREG_SET_ORDER)) {
-    $info = array();
-    foreach ($matches as $match) {
-      // Fetch the key and value string
-      $i = 0;
-      foreach (array('key', 'value1', 'value2', 'value3') as $var) {
-        $$var = isset($match[++$i]) ? $match[$i] : '';
-      }
-      $value = stripslashes(substr($value1, 1, -1)) . stripslashes(substr($value2, 1, -1)) . $value3;
-
-      // Parse array syntax
-      $keys = preg_split('/\]?\[/', rtrim($key, ']'));
-      $last = array_pop($keys);
-      $parent = &$info;
-
-      // Create nested arrays
-      foreach ($keys as $key) {
-        if ($key == '') {
-          $key = count($parent);
-        }
-        if (!isset($parent[$key]) || !is_array($parent[$key])) {
-          $parent[$key] = array();
-        }
-        $parent = &$parent[$key];
-      }
-
-      // Handle PHP constants
-      if (defined($value)) {
-        $value = constant($value);
-      }
-
-      // Insert actual value
-      if ($last == '') {
-        $last = count($parent);
-      }
-      $parent[$last] = $value;
-    }
-    return $info;
-  }
-  return FALSE;
 }
 
 function drush_make_validate_info_file($info) {
@@ -158,50 +106,21 @@ function drush_make_validate_info_file($info) {
     }
     else {
       // Filter out entries that have been forcibly removed via [foo] = FALSE
-      $info['projects'] = array_filter($info['projects']);
-
       foreach ($info['projects'] as $project => $project_data) {
-        // Project has an attributes array.
-        if (is_string($project) && is_array($project_data)) {
-          if (in_array($project, $names)) {
-            drush_make_error('BUILD_ERROR', dt("Project %project defined twice (remove the first projects[] = %project).", array('%project' => $project)));
-            $errors = TRUE;
-          }
-          $names[] = $project;
-          foreach ($project_data as $attribute => $value) {
-            // Unset disallowed attributes.
-            if (in_array($attribute, array('contrib_destination'))) {
-              unset($info['projects'][$project][$attribute]);
-            }
-            // Prevent malicious attempts to access other areas of the filesystem.
-            elseif (in_array($attribute, array('subdir', 'directory_name')) && !drush_make_safe_path($value)) {
-              drush_make_error('BUILD_ERROR', dt("Illegal path %path for '%attribute' attribute in project %project.", array('%path' => $value, '%attribute' => $attribute, '%project' => $project)));
-              $errors = TRUE;
-            }
-          }
-        }
-        // Cover if there is no project info, it's just a project name.
-        elseif (is_numeric($project) && is_string($project_data)) {
-          if (in_array($project_data, $names)) {
-            drush_make_error('BUILD_ERROR', dt("Project %project defined twice (remove the first projects[] = %project).", array('%project' => $project_data)));
-            $errors = TRUE;
-          }
-          $names[] = $project_data;
+        if ($project_data == FALSE && $project_data !== array()) {
           unset($info['projects'][$project]);
-          $info['projects'][$project_data] = array();
+          continue;
         }
-        // Convert shorthand project version style to array format.
-        elseif (is_string($project_data)) {
-          if (in_array($project, $names)) {
-            drush_make_error('BUILD_ERROR', dt("Project %project defined twice (remove the first projects[] = %project).", array('%project' => $project)));
+        foreach ($project_data as $attribute => $value) {
+          // Unset disallowed attributes.
+          if (in_array($attribute, array('contrib_destination'))) {
+            unset($info['projects'][$project][$attribute]);
+          }
+          // Prevent malicious attempts to access other areas of the filesystem.
+          elseif (in_array($attribute, array('subdir', 'directory_name')) && !drush_make_safe_path($value)) {
+            drush_make_error('BUILD_ERROR', dt("Illegal path %path for '%attribute' attribute in project %project.", array('%path' => $value, '%attribute' => $attribute, '%project' => $project)));
             $errors = TRUE;
           }
-          $names[] = $project;
-          $info['projects'][$project] = array('version' => $project_data);
-        }
-        else {
-          drush_make_error('BUILD_ERROR', dt('Project %project incorrectly specified.', array('%project' => $project)));
-          $errors = TRUE;
         }
       }
     }
@@ -217,7 +136,7 @@ function drush_make_validate_info_file($info) {
 
       foreach($info['libraries'] as $library => $library_data) {
         if (is_array($library_data)) {
-          foreach($library_data as $attribute => $value) {
+          foreach ($library_data as $attribute => $value) {
             // Unset disallowed attributes.
             if (in_array($attribute, array('contrib_destination'))) {
               unset($info['libraries'][$library][$attribute]);
