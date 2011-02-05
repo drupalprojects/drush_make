@@ -59,6 +59,7 @@ function drush_make_drush_command() {
       'drush make-test svn' => 'Run tests for SVN integration.',
     ),
   );
+
   $items['make-generate'] = array(
     'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_FULL,
     'description' => 'Attempts to generate a makefile from the current Drupal install, specifying project version numbers unless not known or otherwise specified. Unversioned projects will be interpreted later by drush make as "most recent stable release"',

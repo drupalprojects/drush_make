@@ -1,6 +1,14 @@
 <?php
 // $Id$
 
+define('DRUSH_MAKE_TOKEN_LITERAL', 'literal');
+define('DRUSH_MAKE_TOKEN_COMMAND', 'command');
+define('DRUSH_MAKE_TOKEN_NEWLINE', 'newline');
+
+define('DRUSH_MAKE_COMMAND_ASSIGNMENT', 'assignment');
+define('DRUSH_MAKE_COMMAND_BEGIN_SCOPE', 'begin scope');
+define('DRUSH_MAKE_COMMAND_END_SCOPE', 'end scope');
+
 function drush_make_parser_tokenize($data) {
   $chunks = _drush_make_parser_extract_literals($data);
   $in_quote = FALSE;
