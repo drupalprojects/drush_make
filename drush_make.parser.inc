@@ -82,7 +82,56 @@ function _drush_make_parser_tokenize($data, &$tokens, &$last_newline) {
 
 function drush_make_parser_parse($tokens) {
   $commands = _drush_make_parser_extract_commands($tokens);
-  return $commands;
+  $scope = array();
+  $info = array();
+  foreach ($commands as $command) {
+    if ($command['type'] == DRUSH_MAKE_COMMAND_ASSIGNMENT) {
+      if (count($command['key']) == 1) {
+        $info[$command['key'][0]] = $command['value'];
+      }
+      else {
+        if (count($command['key']) == 2 && $command['key'][1] == '') {
+          $command['key'][1] = $command['value'];
+          $info[$command['key'][0]][$command['value']] = array();
+        }
+        elseif (count($command['key']) == 2) {
+          $info[$command['key'][0]][$command['key'][1]] = array('version' => $command['value']);
+        }
+        else {
+          $current = &$info;
+          foreach ($command['key'] as $key) {
+            if (!isset($current[$key])) {
+              $current[$key] = array();
+            }
+            $current = &$current[$key];
+          }
+          $current = $command['value'];
+        }
+
+        foreach ($scope as $item) {
+          $info[$command['key'][0]][$command['key'][1]] = array_merge_recursive($item, $info[$command['key'][0]][$command['key'][1]]);
+        }
+      }
+    }
+    elseif ($command['type'] == DRUSH_MAKE_COMMAND_BEGIN_SCOPE) {
+      $current_scope = array();
+      foreach ($command['scope'] as $assignment) {
+        $current = &$current_scope;
+        foreach ($assignment['key'] as $key) {
+          if (!isset($current[$key])) {
+            $current[$key] = array();
+          }
+          $current = &$current[$key];
+        }
+        $current = $assignment['value'];
+      }
+      $scope[] = $current_scope;
+    }
+    elseif ($command['type'] == DRUSH_MAKE_COMMAND_END_SCOPE) {
+      array_pop($scope);
+    }
+  }
+  return $info;
 }
 
 function _drush_make_parser_extract_commands($tokens) {
@@ -171,4 +220,58 @@ function _drush_make_parser_extract_commands($tokens) {
     }
   }
   return $commands;
+}
+
+function drush_make_parser_parse($tokens) {
+  $commands = _drush_make_parser_extract_commands($tokens);
+  $scope = array();
+  $info = array();
+  foreach ($commands as $command) {
+    if ($command['type'] == DRUSH_MAKE_COMMAND_ASSIGNMENT) {
+      if (count($command['key']) == 1) {
+        $info[$command['key'][0]] = $command['value'];
+      }
+      else {
+        if (count($command['key']) == 2 && $command['key'][1] == '') {
+          $command['key'][1] = $command['value'];
+          $info[$command['key'][0]][$command['value']] = array();
+        }
+        elseif (count($command['key']) == 2) {
+          $info[$command['key'][0]][$command['key'][1]] = array('version' => $command['value']);
+        }
+        else {
+          $current = &$info;
+          foreach ($command['key'] as $key) {
+            if (!isset($current[$key])) {
+              $current[$key] = array();
+            }
+            $current = &$current[$key];
+          }
+          $current = $command['value'];
+        }
+
+        foreach ($scope as $item) {
+          $info[$command['key'][0]][$command['key'][1]] = array_merge_recursive($item, $info[$command['key'][0]][$command['key'][1]]);
+        }
+      }
+    }
+    elseif ($command['type'] == DRUSH_MAKE_COMMAND_BEGIN_SCOPE) {
+      $current_scope = array();
+      foreach ($command['scope'] as $assignment) {
+        $current = &$current_scope;
+        foreach ($assignment['key'] as $key) {
+          if (!isset($current[$key])) {
+            $current[$key] = array();
+          }
+          $current = &$current[$key];
+        }
+        $current = $assignment['value'];
+      }
+      $scope[] = $current_scope;
+    }
+    elseif ($command['type'] == DRUSH_MAKE_COMMAND_END_SCOPE) {
+      array_pop($scope);
+    }
+  }
+  return $info;
 }
