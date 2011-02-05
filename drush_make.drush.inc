@@ -183,7 +183,7 @@ function drush_make_projects($recursion, $contrib_destination, $info, $build_pat
     }
     $projects[$project['download_type']][$project['name']] = $project;
   }
-print_r($projects);
+
   $cores = !empty($projects['core']) ? count($projects['core']) : 0;
 
   if (drush_get_option('no-core')) {
