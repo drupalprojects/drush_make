@@ -90,8 +90,12 @@ function _drush_make_parser_tokenize($data, &$tokens, &$last_newline) {
 
 function drush_make_parser_parse($tokens) {
   $commands = _drush_make_parser_extract_commands($tokens);
+  if (is_string($commands)) {
+    return $commands;
+  }
   $scope = array();
   $info = array();
+  $merged = array();
   foreach ($commands as $command) {
     if ($command['type'] == DRUSH_MAKE_COMMAND_ASSIGNMENT) {
       if (count($command['key']) == 1) {
@@ -116,8 +120,11 @@ function drush_make_parser_parse($tokens) {
           $current = $command['value'];
         }
 
-        foreach ($scope as $item) {
-          $info[$command['key'][0]][$command['key'][1]] = array_merge_recursive($item, $info[$command['key'][0]][$command['key'][1]]);
+        if (!in_array(array($command['key'][0], $command['key'][1]), $merged)) {
+          foreach ($scope as $item) {
+            $info[$command['key'][0]][$command['key'][1]] = array_merge_recursive($item, $info[$command['key'][0]][$command['key'][1]]);
+          }
+          $merged[] = array($command['key'][0], $command['key'][1]);
         }
       }
     }
@@ -153,6 +160,7 @@ function _drush_make_parser_extract_commands($tokens) {
 
   $in_scope_assignment = FALSE;
   $scope_assignment = array();
+  $scope = 0;
 
   foreach ($tokens as $token) {
     if ($token['type'] == DRUSH_MAKE_TOKEN_COMMAND && ($token['data'] == ';' || $token['data'] == '#')) {
@@ -162,7 +170,6 @@ function _drush_make_parser_extract_commands($tokens) {
       $in_comment = FALSE;
     }
     if (!$in_comment && $token['type'] != DRUSH_MAKE_TOKEN_NEWLINE) {
-
       // If it's a literal, assume it's the start of an assignment.
       if (!$in_assignment && $token['type'] == DRUSH_MAKE_TOKEN_LITERAL && $in_scope_assignment != 2) {
         // Start off the key with the current literal.
@@ -187,7 +194,7 @@ function _drush_make_parser_extract_commands($tokens) {
         $in_assignment = 1;
       }
       elseif ($in_assignment == 1 || $in_assignment == 2) {
-        return array('error' => TRUE, 'message' => 'Unexpected token "' . $token['data'] . '" in assignment.');
+        return 'Unexpected token "' . $token['data'] . '" in assignment.';
       }
       elseif ($in_assignment == 3) {
         if ($token['type'] == DRUSH_MAKE_TOKEN_LITERAL) {
@@ -201,7 +208,7 @@ function _drush_make_parser_extract_commands($tokens) {
           $in_assignment = 0;
         }
         else {
-          return array('error' => TRUE, 'message' => 'Unexpected token "' . $token['data'] . '" in assignment.');
+          return 'Unexpected token "' . $token['data'] . '" in assignment.';
         }
       }
 
@@ -212,20 +219,26 @@ function _drush_make_parser_extract_commands($tokens) {
         $in_scope_assignment = 2;
         $commands[] = array('type' => DRUSH_MAKE_COMMAND_BEGIN_SCOPE, 'scope' => $scope_assignment);
         $scope_assignment = array();
+        $scope++;
       }
-      elseif ($in_scope_assignment == 1) {
-        return array('error' => TRUE, 'message' => 'Unexpected token "' . $token['data'] . '" in scope assignment.');
+      elseif ($in_scope_assignment == 1 && $token['data'] != ',') {
+        return 'Unexpected token "' . $token['data'] . '" in scope assignment.';
       }
       elseif ($in_scope_assignment == 2 && ($token['type'] != DRUSH_MAKE_TOKEN_COMMAND || $token['data'] != '{')) {
-        return array('error' => TRUE, 'message' => 'A "{" must follow ")".');
+        return 'A "{" must follow ")".';
       }
       elseif ($in_scope_assignment == 2 && $token['type'] == DRUSH_MAKE_TOKEN_COMMAND && $token['data'] == '{') {
         $in_scope_assignment = 0;
       }
       elseif ($token['type'] == DRUSH_MAKE_TOKEN_COMMAND && $token['data'] == '}') {
         $commands[] = array('type' => DRUSH_MAKE_COMMAND_END_SCOPE);
+        $scope--;
       }
     }
   }
+  if ($scope != 0) {
+    return 'Scope mismatch';
+  }
+
   return $commands;
 }
