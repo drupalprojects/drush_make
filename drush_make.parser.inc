@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 define('DRUSH_MAKE_TOKEN_LITERAL', 'literal');
 define('DRUSH_MAKE_TOKEN_COMMAND', 'command');
