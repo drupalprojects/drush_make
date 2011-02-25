@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 class DrushMakeProject_Theme extends DrushMakeProject {
   public function __construct(&$project, $paths) {

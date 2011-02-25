@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 class DrushMakeProject_Library extends DrushMakeProject {
   public function __construct(&$project, $paths) {

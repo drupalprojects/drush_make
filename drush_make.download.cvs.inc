@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 class DrushMakeDownload_CVS extends DrushMakeDownload {
 

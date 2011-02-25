@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 class DrushMakeProject_Core extends DrushMakeProject {
   /**

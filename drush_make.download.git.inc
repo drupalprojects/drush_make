@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 class DrushMakeDownload_Git extends DrushMakeDownload {
 
