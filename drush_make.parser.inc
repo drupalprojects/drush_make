@@ -111,10 +111,15 @@ function drush_make_parser_parse($tokens) {
         else {
           $current = &$info;
           foreach ($command['key'] as $key) {
-            if (!isset($current[$key])) {
+            if ($current[$key] != '' && !isset($current[$key])) {
               $current[$key] = array();
             }
-            $current = &$current[$key];
+            if ($key == '') {
+              $current = &$current[];
+            }
+            else {
+              $current = &$current[$key];
+            }
           }
           $current = $command['value'];
         }
@@ -132,10 +137,15 @@ function drush_make_parser_parse($tokens) {
       foreach ($command['scope'] as $assignment) {
         $current = &$current_scope;
         foreach ($assignment['key'] as $key) {
-          if (!isset($current[$key])) {
+          if ($current[$key] != '' && !isset($current[$key])) {
             $current[$key] = array();
           }
-          $current = &$current[$key];
+          if ($key == '') {
+            $current = &$current[];
+          }
+          else {
+            $current = &$current[$key];
+          }
         }
         $current = $assignment['value'];
       }
