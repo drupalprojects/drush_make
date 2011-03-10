@@ -178,8 +178,11 @@ function drush_make_projects($recursion, $contrib_destination, $info, $build_pat
       'subdir'              => '',
       'directory_name'      => '',
     );
-    if ($project['location'] != 'http://updates.drupal.org/release-history') {
+    if ($project['location'] != 'http://updates.drupal.org/release-history' && !isset($project['type'])) {
       $project = drush_make_updatexml($project);
+      $project['download_type'] = ($project['type'] == 'core' ? 'core' : 'contrib');
+    }
+    elseif (!empty($project['type'])) {
       $project['download_type'] = ($project['type'] == 'core' ? 'core' : 'contrib');
     }
     else {
@@ -207,7 +210,7 @@ function drush_make_projects($recursion, $contrib_destination, $info, $build_pat
 
   foreach ($projects as $type => $type_projects) {
     foreach ($type_projects as $project) {
-      if ($project['location'] == 'http://updates.drupal.org/release-history') {
+      if ($project['location'] == 'http://updates.drupal.org/release-history' && (!isset($project['type']) || !isset($project['download']))) {
         $project = drush_make_updatexml($project);
       }
       if (!empty($md5)) {
@@ -287,7 +290,7 @@ function drush_make_updatexml($project) {
     $term_map = array(
       'Modules' => 'module',
       'Themes' => 'theme',
-      'Drupal project' => 'core',
+      'Drupal core' => 'core',
       'Installation profiles' => 'profile',
       'Translations' => 'translation'
     );

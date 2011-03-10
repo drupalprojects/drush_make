@@ -51,7 +51,7 @@ function drush_make_test_get_tests($id = NULL) {
       'makefile' => 'tests/post.make',
       'build'    => TRUE,
       'messages' => array(
-        'Build hash: 58f9bf68b1a2aefca87a151c06cc0e29',
+        'Build hash: 9a5e2476d858ff182053257a688e32f0',
       ),
       'options'  => array('no-core' => TRUE),
     ),
@@ -60,7 +60,7 @@ function drush_make_test_get_tests($id = NULL) {
       'makefile' => 'tests/git.make',
       'build'    => TRUE,
       'messages' => array(
-        'Build hash: 8321693b7560f04b25d079911ba96823',
+        'Build hash: 374b448ab58cb329585ff75337bf5374',
       ),
       'options'  => array('no-core' => TRUE),
     ),
@@ -123,7 +123,7 @@ function drush_make_test_get_tests($id = NULL) {
       'makefile' => 'tests/translations.make',
       'build'    => TRUE,
       'messages' => array(
-        'Build hash: 6eff534700a33eac2abf2ad503c86d1b',
+        'Build hash: 4aa84d1d71fbe1120cb2988cc4dd224d',
       ),
       'options'  => array('translations' => 'es,pt-br'),
     ),
@@ -141,7 +141,7 @@ function drush_make_test_get_tests($id = NULL) {
       'makefile' => 'tests/file.make',
       'build'    => TRUE,
       'messages' => array(
-        'Build hash: ab8cb79508e9c992dace2e40c6435e5b',
+        'Build hash: f76ec174a775ce67f8e9edcb02336ef2',
       ),
       'options'  => array('no-core' => TRUE),
     ),
@@ -150,7 +150,7 @@ function drush_make_test_get_tests($id = NULL) {
       'makefile' => 'tests/md5-succeed.make',
       'build'    => TRUE,
       'messages' => array(
-        'Build hash: ab8cb79508e9c992dace2e40c6435e5b',
+        'Build hash: f76ec174a775ce67f8e9edcb02336ef2',
       ),
       'options'  => array('no-core' => TRUE),
     ),
@@ -159,7 +159,7 @@ function drush_make_test_get_tests($id = NULL) {
       'makefile' => 'tests/md5-fail.make',
       'build'    => FALSE,
       'messages' => array(
-        'Checksum verification failed for README.txt?revision=1.1.2.22&view=co&pathrev=DRUPAL-6--2. Expected - fail -, received 6ac9eb759bc6834c50cc646caea00ea7.'
+        'Checksum verification failed for README.txt. Expected - fail -, received c8968d801a953b9ea735364d6f3dfabc.'
       ),
       'options'  => array('no-core' => TRUE),
     ),
@@ -168,9 +168,48 @@ function drush_make_test_get_tests($id = NULL) {
       'makefile' => 'tests/md5-fail.make',
       'build'    => TRUE,
       'messages' => array(
-        'Build hash: ab8cb79508e9c992dace2e40c6435e5b',
+        'Build hash: f76ec174a775ce67f8e9edcb02336ef2',
       ),
       'options'  => array('no-core' => TRUE, 'ignore-checksums' => TRUE),
+    ),
+    'do-fail-attribute' => array(
+      'name'     => 'D.o: Fail attributes',
+      'makefile' => 'tests/do-fail-attribute.make',
+      'build'    => FALSE,
+      'options'  => array('drupal-org' => TRUE),
+    ),
+    'do-fail-dev' => array(
+      'name'     => 'D.o: Fail dev',
+      'makefile' => 'tests/do-fail-dev.make',
+      'build'    => FALSE,
+      'options'  => array('drupal-org' => TRUE),
+    ),
+    'do-fail-library' => array(
+      'name'     => 'D.o: Fail library',
+      'makefile' => 'tests/do-fail-library.make',
+      'build'    => FALSE,
+      'options'  => array('drupal-org' => TRUE),
+    ),
+    'do-fail-patch' => array(
+      'name'     => 'D.o: Fail patch',
+      'makefile' => 'tests/do-fail-patch.make',
+      'build'    => FALSE,
+      'options'  => array('drupal-org' => TRUE),
+    ),
+    'do-fail-version' => array(
+      'name'     => 'D.o: Fail version',
+      'makefile' => 'tests/do-fail-version.make',
+      'build'    => FALSE,
+      'options'  => array('drupal-org' => TRUE),
+    ),
+    'do-succeed' => array(
+      'name'     => 'D.o: Success',
+      'makefile' => 'tests/do-succeed.make',
+      'build'    => TRUE,
+      'messages' => array(
+        'Build hash: fc3cedb0f656a4d9bc071815e4ca2e07',
+      ),
+      'options'  => array('drupal-org' => TRUE),
     ),
   );
   if (isset($id)) {
