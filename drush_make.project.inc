@@ -21,20 +21,20 @@ class DrushMakeProject {
     if (!empty($this->made)) {
       return FALSE;
     }
-    $download_location = $this->findDownloadLocation();
-    if (drush_make_download_factory($this->name, $this->download, $download_location) === FALSE) {
+    $this->findDownloadLocation();
+    if (drush_make_download_factory($this->name, $this->download, $this->download_location) === FALSE) {
       return FALSE;
     }
-    if (!$this->addLockfile($download_location)) {
+    if (!$this->addLockfile($this->download_location)) {
       return FALSE;
     }
-    if (!$this->applyPatches($download_location)) {
+    if (!$this->applyPatches($this->download_location)) {
       return FALSE;
     }
-    if (!$this->getTranslations($download_location)) {
+    if (!$this->getTranslations($this->download_location)) {
       return FALSE;
     }
-    if (!$this->recurse($download_location)) {
+    if (!$this->recurse($this->download_location)) {
       return FALSE;
     }
     $this->made = TRUE;
