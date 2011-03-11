@@ -120,11 +120,10 @@ function drush_drush_make_make_validate($makefile = NULL, $build_path = NULL) {
  * Drush callback; make based on the makefile.
  */
 function drush_drush_make_make() {
-  $build_path = drush_get_context('drush_make_build_path');
   $info = drush_get_context('drush_make_info');
 
-  if (drush_make_projects(FALSE, drush_get_option('contrib-destination', 'sites/all'), $info, $build_path)) {
-    drush_make_libraries(drush_get_option('contrib-destination', 'sites/all'), $info, $build_path);
+  if (drush_make_projects(FALSE, drush_get_option('contrib-destination', 'sites/all'), $info)) {
+    drush_make_libraries(drush_get_option('contrib-destination', 'sites/all'), $info);
 
     if (drush_get_option('prepare-install')) {
       drush_make_prepare_install($build_path);
@@ -157,7 +156,7 @@ function drush_drush_make_post_make($makefile = NULL, $build_path = NULL) {
   drush_make_clean_tmp();
 }
 
-function drush_make_projects($recursion, $contrib_destination, $info, $build_path) {
+function drush_make_projects($recursion, $contrib_destination, $info) {
   $projects = array();
   if (empty($info['projects'])) {
     if (drush_get_option('no-core')) {
@@ -250,7 +249,7 @@ function drush_make_projects($recursion, $contrib_destination, $info, $build_pat
   return TRUE;
 }
 
-function drush_make_libraries($contrib_destination, $info, $build_path) {
+function drush_make_libraries($contrib_destination, $info) {
   if (empty($info['libraries'])) {
     return;
   }
