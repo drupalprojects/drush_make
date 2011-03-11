@@ -35,25 +35,33 @@ function drush_make_parse_info_file($makefile, $parsed = TRUE) {
     $include_path = dirname($makefile);
     $includes = array();
     if (!empty($info['includes']) && is_array($info['includes'])) {
-      foreach ($info['includes'] as $include) {
-        if (is_string($include)) {
-          if (drush_make_valid_url($include, TRUE) && ($file = drush_make_parse_info_file($include, FALSE))) {
-            $includes[] = $file;
+      foreach ($info['includes'] as $include => $array) {
+        if (drush_make_valid_url($include, TRUE) || file_exists($include_path . '/' . $include)) {
+          if (file_exists($include_path . '/' . $include)) {
+            $include = $include_path . '/' . $include;
           }
-          else if (file_exists($include_path .'/'. $include) && ($file = drush_make_parse_info_file($include_path .'/'. $include, FALSE))) {
-            $includes[] = $file;
-          }
-          else {
-            drush_make_error('BUILD_ERROR', dt("Include file missing: %include", array('%include' => $include)));
+          $included_info = drush_make_parse_info_file($include);
+
+
+          foreach (array('projects', 'libraries') as $key) {
+            if (isset($included_info[$key]) && isset($info[$key])) {
+              $info[$key] = array_merge($included_info[$key], $info[$key]);
+            }
+            elseif (isset($included_info[$key])) {
+              $info[$key] = $included_info[$key];
+            }
+
+            if (isset($info[$key])) {
+              foreach ($info[$key] as $inner_key => $item) {
+                if (!$item['version']) {
+                  unset($info[$key][$inner_key]);
+                }
+              }
+            }
           }
         }
       }
     }
-    $includes[] = $data;
-    $data = implode("\n", $includes);
-    include_once 'drush_make.parser.inc';
-    $tokens = drush_make_parser_tokenize($data);
-    $info = drush_make_parser_parse($tokens);
   }
   if ($parsed) {
     return $info;

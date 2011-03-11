@@ -106,22 +106,10 @@ function drush_make_parser_parse($tokens) {
           $info[$command['key'][0]][$command['value']] = array();
         }
         elseif (count($command['key']) == 2) {
-          $info[$command['key'][0]][$command['key'][1]] = array('version' => $command['value']);
+          $info[$command['key'][0]][$command['key'][1]] = array('version' => _drush_make_parser_value($command['value']));
         }
         else {
-          $current = &$info;
-          foreach ($command['key'] as $key) {
-            if ($current[$key] != '' && !isset($current[$key])) {
-              $current[$key] = array();
-            }
-            if ($key == '') {
-              $current = &$current[];
-            }
-            else {
-              $current = &$current[$key];
-            }
-          }
-          $current = $command['value'];
+          _drush_make_parser_assign($info, $command);
         }
 
         if (!in_array(array($command['key'][0], $command['key'][1]), $merged)) {
@@ -135,19 +123,7 @@ function drush_make_parser_parse($tokens) {
     elseif ($command['type'] == DRUSH_MAKE_COMMAND_BEGIN_SCOPE) {
       $current_scope = array();
       foreach ($command['scope'] as $assignment) {
-        $current = &$current_scope;
-        foreach ($assignment['key'] as $key) {
-          if ($current[$key] != '' && !isset($current[$key])) {
-            $current[$key] = array();
-          }
-          if ($key == '') {
-            $current = &$current[];
-          }
-          else {
-            $current = &$current[$key];
-          }
-        }
-        $current = $assignment['value'];
+        _drush_make_parser_assign($current_scope, $assignment);
       }
       $scope[] = $current_scope;
     }
@@ -156,6 +132,29 @@ function drush_make_parser_parse($tokens) {
     }
   }
   return $info;
+}
+
+function _drush_make_parser_assign(&$current, $assignment) {
+  foreach ($assignment['key'] as $key) {
+    if ($key != '' && !isset($current[$key])) {
+      $current[$key] = array();
+    }
+    if ($key == '') {
+      $current = &$current[];
+    }
+    else {
+      $current = &$current[$key];
+    }
+  }
+  $current = _drush_make_parser_value($assignment['value']);
+}
+
+function _drush_make_parser_value($value) {
+  $constants = get_defined_constants();
+  if (isset($constants[$value])) {
+    $value = $constants[$value];
+  }
+  return $value;
 }
 
 function _drush_make_parser_extract_commands($tokens) {
