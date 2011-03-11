@@ -91,7 +91,7 @@ function drush_make_drush_help($section) {
   }
 }
 
-function drush_drush_make_make_validate() {
+function drush_drush_make_make_validate($makefile = NULL, $build_path = NULL) {
   if (!drush_make_ensure_version()) {
     return FALSE;
   }
@@ -99,15 +99,10 @@ function drush_drush_make_make_validate() {
     drush_print(drush_make_version());
     return FALSE;
   }
-}
-
-/**
- * Drush callback; make based on the makefile.
- */
-function drush_drush_make_make($makefile = NULL, $build_path = NULL) {
   if (!($build_path = drush_make_build_path($build_path))) {
-    return;
+    return FALSE;
   }
+
   $info = drush_make_parse_info_file($makefile);
   if (is_string($info)) {
     drush_make_error('PARSE_ERROR', $info);
@@ -116,6 +111,17 @@ function drush_drush_make_make($makefile = NULL, $build_path = NULL) {
   if ($info === FALSE || ($info = drush_make_validate_info_file($info)) === FALSE) {
     return FALSE;
   }
+
+  drush_set_context('drush_make_build_path', $build_path);
+  drush_set_context('drush_make_info', $info);
+}
+
+/**
+ * Drush callback; make based on the makefile.
+ */
+function drush_drush_make_make() {
+  $build_path = drush_get_context('drush_make_build_path');
+  $info = drush_get_context('drush_make_info');
 
   if (drush_make_projects(FALSE, drush_get_option('contrib-destination', 'sites/all'), $info, $build_path)) {
     drush_make_libraries(drush_get_option('contrib-destination', 'sites/all'), $info, $build_path);
