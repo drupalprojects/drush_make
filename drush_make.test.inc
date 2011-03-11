@@ -19,7 +19,10 @@ function drush_make_test($test) {
     }
   }
   else {
-    drush_make_test_run_test($test);
+    $tests = explode(',', $test);
+    foreach ($tests as $test) {
+      drush_make_test_run_test($test);
+    }
   }
 }
 
