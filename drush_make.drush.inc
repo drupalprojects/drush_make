@@ -165,10 +165,6 @@ function drush_make_projects($recursion, $contrib_destination, $info) {
   }
   $ignore_checksums = drush_get_option('ignore-checksums');
   foreach ($info['projects'] as $key => $project) {
-    $md5 = '';
-    if (isset($project['md5'])) {
-      $md5 = $project['md5'];
-    }
     // Merge the known data onto the project info.
     $project += array(
       'name'                => $key,
@@ -216,11 +212,8 @@ function drush_make_projects($recursion, $contrib_destination, $info) {
       if ($project['location'] == 'http://updates.drupal.org/release-history' && (!isset($project['type']) || !isset($project['download']))) {
         $project = drush_make_updatexml($project);
       }
-      if (!empty($md5)) {
+      if (isset($project['md5']) && !$ignore_checksums) {
         $project['download']['md5'] = $md5;
-      }
-      if ($ignore_checksums) {
-        unset($project['download']['md5']);
       }
       $class_name = 'DrushMakeProject_' . $project['type'];
       if (class_exists($class_name)) {
