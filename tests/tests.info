@@ -94,3 +94,7 @@
     tests[do-fail-version][makefile] = "tests/do-fail-version.make"
   }
 }
+
+tests[parser][name] = "Parser"
+tests[parser][makefile] = "tests/parser.info"
+tests[parser][test] = "drush_make_test_parser_test"

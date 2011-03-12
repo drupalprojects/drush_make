@@ -1,0 +1,16 @@
+one = "one"
+
+(two = "two") {
+  numbers[] = "three", numbers[four][x] = 4
+  numbers[five]["six"] = test # comment
+  (seven = "7") {
+    letters[] = "a"
+    () {} ; this line should be fine and just do nothing -- this is a comment.
+  }
+  eight = "8"
+  projects[nine] = 9
+}
+projects[ten] = 10
+numbers[] = eleven
+twelve = 12
+

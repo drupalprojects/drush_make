@@ -107,3 +107,34 @@ function drush_make_test_make_test($test) {
   drush_log(dt('Drush make test @testname failed.', array('@testname' => $test['name'])), 'error');
   return FALSE;
 }
+
+function drush_make_test_parser_test($test) {
+  $makefile = dirname(__FILE__) .'/'. $test['makefile'];
+  include_once 'drush_make.parser.inc';
+  $tokens = drush_make_parser_tokenize(file_get_contents($makefile));
+  $result = drush_make_parser_parse($tokens);
+  $expected_result = array(
+    'one' => 'one',
+    'numbers' => array(
+      'three' => array('two' => 'two'),
+      'four' => array('two' => 'two', 'x' => 4),
+      'five' => array('two' => 'two', 'six' => 'test'),
+      'eleven' => array(),
+    ),
+    'letters' => array(
+      'a' => array('two' => 'two', 'seven' => 7)
+    ),
+    'projects' => array(
+      'nine' => array('two' => 'two', 'version' => 9),
+      'ten' => array('version' => 10),
+    ),
+    'eight' => 8,
+    'twelve' => 12,
+  );
+  if (ksort($result) == ksort($expected_result)) {
+    drush_log(dt('Drush make parser test passed.'), 'ok');
+    return TRUE;
+  }
+  drush_log(dt('Drush make parser test failed.'), 'error');
+  return FALSE;
+}
