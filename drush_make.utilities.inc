@@ -78,7 +78,7 @@ function drush_make_parse_info_file($makefile, $parsed = TRUE) {
   foreach (_drush_make_top_level_containers(TRUE) as $key => $type) {
     if (isset($info[$key]) && is_array($info[$key])) {
       foreach ($info[$key] as $inner_key => $item) {
-        if (!$item['version']) {
+        if (isset($item['version']) && !$item['version']) {
           unset($info[$key][$inner_key]);
         }
         else {
