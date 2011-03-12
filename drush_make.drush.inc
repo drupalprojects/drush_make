@@ -121,7 +121,6 @@ function drush_drush_make_make_validate($makefile = NULL, $build_path = NULL) {
  */
 function drush_drush_make_make() {
   $info = drush_get_context('drush_make_info');
-
   if (drush_make_projects(FALSE, drush_get_option('contrib-destination', 'sites/all'), $info)) {
     drush_make_libraries(drush_get_option('contrib-destination', 'sites/all'), $info);
 

@@ -12,6 +12,17 @@ function drush_make_ensure_version() {
   drush_set_error(dt('Drush version 2.1 or higher is required for drush make to work.'));
 }
 
+function _drush_make_top_level_containers($mapping = FALSE) {
+  $containers = array(
+    'projects' => '',
+    'libraries' => 'library',
+    'modules' => 'module',
+    'themes' => 'theme',
+    'profiles' => 'profile',
+  );
+  return ($mapping ? $containers: array_keys($containers));
+}
+
 /**
  * Parse Drupal info file format.
  *
@@ -31,44 +42,54 @@ function drush_make_parse_info_file($makefile, $parsed = TRUE) {
   if (!$info) {
     return FALSE;
   }
-  if (!empty($info['includes'])) {
+  if (!empty($info['includes']) && is_array($info['includes'])) {
     $include_path = dirname($makefile);
     $includes = array();
-    if (!empty($info['includes']) && is_array($info['includes'])) {
-      foreach ($info['includes'] as $include => $array) {
-        if (drush_make_valid_url($include, TRUE) || file_exists($include_path . '/' . $include)) {
-          if (file_exists($include_path . '/' . $include)) {
-            $include = $include_path . '/' . $include;
-          }
-          $included_info = drush_make_parse_info_file($include);
-
-
-          foreach (array('projects', 'libraries') as $key) {
-            if (isset($included_info[$key]) && isset($info[$key])) {
+    foreach ($info['includes'] as $include => $array) {
+      if (drush_make_valid_url($include, TRUE) || file_exists($include_path . '/' . $include)) {
+        if (file_exists($include_path . '/' . $include)) {
+          $include = $include_path . '/' . $include;
+        }
+        $included_info = drush_make_parse_info_file($include);
+        if (!is_array($included_info)) {
+          return $included_info;
+        }
+    
+        foreach ($included_info as $key => $value) {
+          if (isset($included_info[$key]) && isset($info[$key])) {
+            if (is_array($info[$key]) && is_array($included_info[$key])) {
               $info[$key] = array_merge($included_info[$key], $info[$key]);
             }
-            elseif (isset($included_info[$key])) {
+            elseif (!is_array($info[$key]) && !is_array($included_info[$key])) {
               $info[$key] = $included_info[$key];
             }
-
-            if (isset($info[$key])) {
-              foreach ($info[$key] as $inner_key => $item) {
-                if (!$item['version']) {
-                  unset($info[$key][$inner_key]);
-                }
-              }
+            else {
+              return dt('Included makefile disagrees about whether @key is an array.', array('@key' => $key));
             }
+          }
+          else {
+            $info[$key] = $included_info[$key];
           }
         }
       }
     }
   }
-  if ($parsed) {
-    return $info;
+
+  foreach (_drush_make_top_level_containers(TRUE) as $key => $type) {
+    if (isset($info[$key]) && is_array($info[$key])) {
+      foreach ($info[$key] as $inner_key => $item) {
+        if (!$item['version']) {
+          unset($info[$key][$inner_key]);
+        }
+        if ($type != '') {
+          $item['type'] = $type;
+        }
+        $info['projects'][$inner_key] = $item;
+      }
+    }
   }
-  else {
-    return $data;
-  }
+
+  return $info;
 }
 
 function drush_make_validate_info_file($info) {
