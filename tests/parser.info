@@ -8,7 +8,9 @@ one = "one"
     () {} ; this line should be fine and just do nothing -- this is a comment.
   }
   eight = "8"
-  projects[nine] = 9
+  (:environment = twenty) {
+    projects[nine] = 9
+  }
 }
 projects[ten] = 10
 numbers[] = eleven

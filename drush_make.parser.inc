@@ -5,6 +5,7 @@ define('DRUSH_MAKE_TOKEN_COMMAND', 'command');
 define('DRUSH_MAKE_TOKEN_NEWLINE', 'newline');
 
 define('DRUSH_MAKE_COMMAND_ASSIGNMENT', 'assignment');
+define('DRUSH_MAKE_COMMAND_CONDITION', 'condition');
 define('DRUSH_MAKE_COMMAND_BEGIN_SCOPE', 'begin scope');
 define('DRUSH_MAKE_COMMAND_END_SCOPE', 'end scope');
 
@@ -87,7 +88,7 @@ function _drush_make_parser_tokenize($data, &$tokens, &$last_newline) {
   }
 }
 
-function drush_make_parser_parse($tokens) {
+function drush_make_parser_parse($tokens, $conditions = array()) {
   $commands = _drush_make_parser_extract_commands($tokens);
   if (is_string($commands)) {
     return $commands;
@@ -95,7 +96,8 @@ function drush_make_parser_parse($tokens) {
   $scope = array();
   $info = array();
   $merged = array();
-  foreach ($commands as $command) {
+  while (count($commands)) {
+    $command = array_shift($commands);
     if ($command['type'] == DRUSH_MAKE_COMMAND_ASSIGNMENT) {
       if (count($command['key']) == 1) {
         $info[$command['key'][0]] = $command['value'];
@@ -122,10 +124,23 @@ function drush_make_parser_parse($tokens) {
     }
     elseif ($command['type'] == DRUSH_MAKE_COMMAND_BEGIN_SCOPE) {
       $current_scope = array();
-      foreach ($command['scope'] as $assignment) {
-        _drush_make_parser_assign($current_scope, $assignment);
+      $conditions_passed = TRUE;
+      foreach ($command['scope'] as $scope_item) {
+        if ($scope_item['type'] == DRUSH_MAKE_COMMAND_ASSIGNMENT) {
+          _drush_make_parser_assign($current_scope, $scope_item);
+        }
+        elseif ($scope_item['type'] == DRUSH_MAKE_COMMAND_CONDITION &&
+          (!isset($conditions[$scope_item['key'][0]]) || $conditions[$scope_item['key'][0]] != $scope_item['value'])) {
+            // Scope doesn't match.
+          while ($command['type'] != DRUSH_MAKE_COMMAND_END_SCOPE) {
+            $command = array_shift($commands);
+          }
+          $conditions_passed = FALSE;
+        }
       }
-      $scope[] = $current_scope;
+      if ($conditions_passed) {
+        $scope[] = $current_scope;
+      }
     }
     elseif ($command['type'] == DRUSH_MAKE_COMMAND_END_SCOPE) {
       array_pop($scope);
@@ -208,6 +223,10 @@ function _drush_make_parser_extract_commands($tokens) {
         if ($token['type'] == DRUSH_MAKE_TOKEN_LITERAL) {
           $assignment = array('type' => DRUSH_MAKE_COMMAND_ASSIGNMENT, 'key' => $assignment_key, 'value' => $token['data']);
           if ($in_scope_assignment) {
+            if (strpos($assignment['key'][0], ':') === 0) {
+              $assignment['type'] = DRUSH_MAKE_COMMAND_CONDITION;
+              $assignment['key'][0] = substr($assignment['key'][0], 1);
+            }
             $scope_assignment[] = $assignment;
           }
           else {

@@ -125,16 +125,21 @@ function drush_make_test_parser_test($test) {
       'a' => array('two' => 'two', 'seven' => 7)
     ),
     'projects' => array(
-      'nine' => array('two' => 'two', 'version' => 9),
       'ten' => array('version' => 10),
     ),
     'eight' => 8,
     'twelve' => 12,
   );
-  if (ksort($result) == ksort($expected_result)) {
-    drush_log(dt('Drush make parser test passed.'), 'ok');
-    return TRUE;
+  if (ksort($result) != ksort($expected_result)) {
+    drush_log(dt('Drush make parser test failed.'), 'error');
+    return FALSE;
   }
-  drush_log(dt('Drush make parser test failed.'), 'error');
-  return FALSE;
+  $expected_result['projects']['nine'] = array('two' => 'two', 'version' => 9);
+  $result = drush_make_parser_parse($tokens, array('environment' => 'twenty'));
+  if (ksort($result) != ksort($expected_result)) {
+    drush_log(dt('Drush make parser test failed.'), 'error');
+    return FALSE;
+  }
+  drush_log(dt('Drush make parser test passed.'), 'ok');
+  return TRUE;
 }
