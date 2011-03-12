@@ -31,8 +31,7 @@ function drush_make_test($test) {
  */
 function drush_make_test_get_tests($id = NULL) {
   include_once 'drush_make.parser.inc';
-  $tokens = drush_make_parser_tokenize(file_get_contents(dirname(__FILE__) . '/tests/tests.info'));
-  $tests = drush_make_parser_parse($tokens);
+  $tests = drush_make_parser_parse(file_get_contents(dirname(__FILE__) . '/tests/tests.info'));
   $tests = $tests['tests'];
 
   if (is_string($tests)) {
@@ -111,8 +110,7 @@ function drush_make_test_make_test($test) {
 function drush_make_test_parser_test($test) {
   $makefile = dirname(__FILE__) .'/'. $test['makefile'];
   include_once 'drush_make.parser.inc';
-  $tokens = drush_make_parser_tokenize(file_get_contents($makefile));
-  $result = drush_make_parser_parse($tokens);
+  $result = drush_make_parser_parse(file_get_contents($makefile));
   $expected_result = array(
     'one' => 'one',
     'numbers' => array(
@@ -135,7 +133,7 @@ function drush_make_test_parser_test($test) {
     return FALSE;
   }
   $expected_result['projects']['nine'] = array('two' => 'two', 'version' => 9);
-  $result = drush_make_parser_parse($tokens, array('environment' => 'twenty'));
+  $result = drush_make_parser_parse(file_get_contents($makefile), array('environment' => 'twenty'));
   if (ksort($result) != ksort($expected_result)) {
     drush_log(dt('Drush make parser test failed.'), 'error');
     return FALSE;

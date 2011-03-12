@@ -9,7 +9,14 @@ define('DRUSH_MAKE_COMMAND_CONDITION', 'condition');
 define('DRUSH_MAKE_COMMAND_BEGIN_SCOPE', 'begin scope');
 define('DRUSH_MAKE_COMMAND_END_SCOPE', 'end scope');
 
-function drush_make_parser_tokenize($data) {
+function drush_make_parser_parse($data, $conditions = array()) {
+  $tokens = _drush_make_parser_tokenize($data);
+  $commands = _drush_make_parser_extract_commands($tokens);
+  $info = _drush_make_parser_interpret($commands, $conditions);
+  return $info;
+}
+
+function _drush_make_parser_tokenize($data) {
   $chunks = _drush_make_parser_extract_literals($data);
   $in_quote = FALSE;
   $tokens = array();
@@ -17,7 +24,7 @@ function drush_make_parser_tokenize($data) {
   $last_newline = TRUE; // Prevent double newlines.
   foreach ($chunks as $chunk) {
     if (!$in_quote) {
-      _drush_make_parser_tokenize($chunk, $tokens, $last_newline);
+      _drush_make_parser_tokenize_helper($chunk, $tokens, $last_newline);
     }
     elseif (!empty($chunk)) {
       $last_newline = FALSE;
@@ -52,7 +59,7 @@ function _drush_make_parser_extract_literals($data) {
   return $chunks;
 }
 
-function _drush_make_parser_tokenize($data, &$tokens, &$last_newline) {
+function _drush_make_parser_tokenize_helper($data, &$tokens, &$last_newline) {
   $token = '';
   $command_characters = array('[', ']', '{', '}', '(', ')', ';', '#', '=', ',');
   $whitespace_characters = array(' ', "\n", "\t");
@@ -86,90 +93,6 @@ function _drush_make_parser_tokenize($data, &$tokens, &$last_newline) {
   if (!empty($token)) {
     $tokens[] = array('type' => DRUSH_MAKE_TOKEN_LITERAL, 'data' => $token);
   }
-}
-
-function drush_make_parser_parse($tokens, $conditions = array()) {
-  $commands = _drush_make_parser_extract_commands($tokens);
-  if (is_string($commands)) {
-    return $commands;
-  }
-  $scope = array();
-  $info = array();
-  $merged = array();
-  while (count($commands)) {
-    $command = array_shift($commands);
-    if ($command['type'] == DRUSH_MAKE_COMMAND_ASSIGNMENT) {
-      if (count($command['key']) == 1) {
-        $info[$command['key'][0]] = $command['value'];
-      }
-      else {
-        if (count($command['key']) == 2 && $command['key'][1] == '') {
-          $command['key'][1] = $command['value'];
-          $info[$command['key'][0]][$command['value']] = array();
-        }
-        elseif (count($command['key']) == 2 && in_array($command['key'][0], _drush_make_top_level_containers())) {
-          $info[$command['key'][0]][$command['key'][1]] = array('version' => _drush_make_parser_value($command['value']));
-        }
-        else {
-          _drush_make_parser_assign($info, $command);
-        }
-
-        if (!in_array(array($command['key'][0], $command['key'][1]), $merged)) {
-          foreach ($scope as $item) {
-            $info[$command['key'][0]][$command['key'][1]] = array_merge_recursive($item, $info[$command['key'][0]][$command['key'][1]]);
-          }
-          $merged[] = array($command['key'][0], $command['key'][1]);
-        }
-      }
-    }
-    elseif ($command['type'] == DRUSH_MAKE_COMMAND_BEGIN_SCOPE) {
-      $current_scope = array();
-      $conditions_passed = TRUE;
-      foreach ($command['scope'] as $scope_item) {
-        if ($scope_item['type'] == DRUSH_MAKE_COMMAND_ASSIGNMENT) {
-          _drush_make_parser_assign($current_scope, $scope_item);
-        }
-        elseif ($scope_item['type'] == DRUSH_MAKE_COMMAND_CONDITION &&
-          (!isset($conditions[$scope_item['key'][0]]) || $conditions[$scope_item['key'][0]] != $scope_item['value'])) {
-            // Scope doesn't match.
-          while ($command['type'] != DRUSH_MAKE_COMMAND_END_SCOPE) {
-            $command = array_shift($commands);
-          }
-          $conditions_passed = FALSE;
-        }
-      }
-      if ($conditions_passed) {
-        $scope[] = $current_scope;
-      }
-    }
-    elseif ($command['type'] == DRUSH_MAKE_COMMAND_END_SCOPE) {
-      array_pop($scope);
-    }
-  }
-  return $info;
-}
-
-function _drush_make_parser_assign(&$current, $assignment) {
-  foreach ($assignment['key'] as $key) {
-    if ($key != '' && !isset($current[$key])) {
-      $current[$key] = array();
-    }
-    if ($key == '') {
-      $current = &$current[];
-    }
-    else {
-      $current = &$current[$key];
-    }
-  }
-  $current = _drush_make_parser_value($assignment['value']);
-}
-
-function _drush_make_parser_value($value) {
-  $constants = get_defined_constants();
-  if (isset($constants[$value])) {
-    $value = $constants[$value];
-  }
-  return $value;
 }
 
 function _drush_make_parser_extract_commands($tokens) {
@@ -268,4 +191,87 @@ function _drush_make_parser_extract_commands($tokens) {
   }
 
   return $commands;
+}
+
+function _drush_make_parser_interpret($commands, $conditions) {
+  if (is_string($commands)) {
+    return $commands;
+  }
+  $scope = array();
+  $info = array();
+  $merged = array();
+  while (count($commands)) {
+    $command = array_shift($commands);
+    if ($command['type'] == DRUSH_MAKE_COMMAND_ASSIGNMENT) {
+      if (count($command['key']) == 1) {
+        $info[$command['key'][0]] = $command['value'];
+      }
+      else {
+        if (count($command['key']) == 2 && $command['key'][1] == '') {
+          $command['key'][1] = $command['value'];
+          $info[$command['key'][0]][$command['value']] = array();
+        }
+        elseif (count($command['key']) == 2 && in_array($command['key'][0], _drush_make_top_level_containers())) {
+          $info[$command['key'][0]][$command['key'][1]] = array('version' => _drush_make_parser_value($command['value']));
+        }
+        else {
+          _drush_make_parser_assign($info, $command);
+        }
+
+        if (!in_array(array($command['key'][0], $command['key'][1]), $merged)) {
+          foreach ($scope as $item) {
+            $info[$command['key'][0]][$command['key'][1]] = array_merge_recursive($item, $info[$command['key'][0]][$command['key'][1]]);
+          }
+          $merged[] = array($command['key'][0], $command['key'][1]);
+        }
+      }
+    }
+    elseif ($command['type'] == DRUSH_MAKE_COMMAND_BEGIN_SCOPE) {
+      $current_scope = array();
+      $conditions_passed = TRUE;
+      foreach ($command['scope'] as $scope_item) {
+        if ($scope_item['type'] == DRUSH_MAKE_COMMAND_ASSIGNMENT) {
+          _drush_make_parser_assign($current_scope, $scope_item);
+        }
+        elseif ($scope_item['type'] == DRUSH_MAKE_COMMAND_CONDITION &&
+          (!isset($conditions[$scope_item['key'][0]]) || $conditions[$scope_item['key'][0]] != $scope_item['value'])) {
+            // Scope doesn't match.
+          while ($command['type'] != DRUSH_MAKE_COMMAND_END_SCOPE) {
+            $command = array_shift($commands);
+          }
+          $conditions_passed = FALSE;
+        }
+      }
+      if ($conditions_passed) {
+        $scope[] = $current_scope;
+      }
+    }
+    elseif ($command['type'] == DRUSH_MAKE_COMMAND_END_SCOPE) {
+      array_pop($scope);
+    }
+  }
+  return $info;
+}
+
+function _drush_make_parser_assign(&$current, $assignment) {
+  foreach ($assignment['key'] as $key) {
+    if ($key != '' && !isset($current[$key])) {
+      $current[$key] = array();
+    }
+    if ($key == '') {
+      $current = &$current[];
+    }
+    else {
+      $current = &$current[$key];
+    }
+  }
+  $current = _drush_make_parser_value($assignment['value']);
+}
+
+function _drush_make_parser_value($value) {
+  $constants = get_defined_constants();
+  if (isset($constants[$value])) {
+    $value = $constants[$value];
+  }
+  return $value;
 }

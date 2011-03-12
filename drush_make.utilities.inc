@@ -36,8 +36,7 @@ function drush_make_parse_info_file($makefile, $parsed = TRUE) {
   }
 
   include_once 'drush_make.parser.inc';
-  $tokens = drush_make_parser_tokenize($data);
-  $info = drush_make_parser_parse($tokens);
+  $info = drush_make_parser_parse($data);
 
   if (!$info) {
     return FALSE;
