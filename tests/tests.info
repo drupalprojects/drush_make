@@ -1,94 +1,96 @@
-(build = TRUE) {
-  (options[no-core] = TRUE) {
-    tests[get][name] = "Test GET retrieval of projects"
-    tests[get][makefile] = "tests/get.make"
-    tests[get][messages][] = "Build hash: 4bf18507da89bed601548210c22a3bed"
+(test = drush_make_test_make_test) {
+  (build = TRUE) {
+    (options[no-core] = TRUE) {
+      tests[get][name] = "Test GET retrieval of projects"
+      tests[get][makefile] = "tests/get.make"
+      tests[get][messages][] = "Build hash: 4bf18507da89bed601548210c22a3bed"
 
-    tests[post][name] = "Test POST retrieval of projects"
-    tests[post][makefile] = "tests/post.make"
-    tests[post][messages][] = "Build hash: 9a5e2476d858ff182053257a688e32f0"
+      tests[post][name] = "Test POST retrieval of projects"
+      tests[post][makefile] = "tests/post.make"
+      tests[post][messages][] = "Build hash: 9a5e2476d858ff182053257a688e32f0"
 
-    tests[git][name] = "GIT integration"
-    tests[git][makefile] = "tests/git.make"
-    tests[git][messages][] = "Build hash: 374b448ab58cb329585ff75337bf5374"
+      tests[git][name] = "GIT integration"
+      tests[git][makefile] = "tests/git.make"
+      tests[git][messages][] = "Build hash: 374b448ab58cb329585ff75337bf5374"
 
-    tests[no-patch-txt][name] = "Test --no-patch-txt option"
-    tests[no-patch-txt][makefile] = "tests/patches.make"
-    tests[no-patch-txt][messages][] = "Build hash: 24f14f6e28498678cebcab2cff3e1030"
-    tests[no-patch-txt][options][no-patch-txt] = TRUE
+      tests[no-patch-txt][name] = "Test --no-patch-txt option"
+      tests[no-patch-txt][makefile] = "tests/patches.make"
+      tests[no-patch-txt][messages][] = "Build hash: 24f14f6e28498678cebcab2cff3e1030"
+      tests[no-patch-txt][options][no-patch-txt] = TRUE
 
-    tests[patch][name] = "Test patching and writing of PATCHES.txt file"
-    tests[patch][makefile] = "tests/patches.make"
-    tests[patch][messages][] = "Build hash: 173ae5e2120463e31ff2e2a9cc02491b"
+      tests[patch][name] = "Test patching and writing of PATCHES.txt file"
+      tests[patch][makefile] = "tests/patches.make"
+      tests[patch][messages][] = "Build hash: 173ae5e2120463e31ff2e2a9cc02491b"
 
-    tests[recursion][name] = "Recursion"
-    tests[recursion][makefile] = "tests/recursion.make"
-    tests[recursion][messages][] = "Build hash: b4d0599c7c44566a7e3dc9086b870723"
+      tests[recursion][name] = "Recursion"
+      tests[recursion][makefile] = "tests/recursion.make"
+      tests[recursion][messages][] = "Build hash: b4d0599c7c44566a7e3dc9086b870723"
 
-    tests[svn][name] = "SVN"
-    tests[svn][makefile] = "tests/svn.make"
-    tests[svn][messages][] = "Build hash: 0cb28a15958d7fc4bbf8bf6b00bc6514"
+      tests[svn][name] = "SVN"
+      tests[svn][makefile] = "tests/svn.make"
+      tests[svn][messages][] = "Build hash: 0cb28a15958d7fc4bbf8bf6b00bc6514"
 
-    tests[contrib-destination][name] = "Contrib-destination attribute"
-    tests[contrib-destination][makefile] = "tests/contrib-destination.make"
-    tests[contrib-destination][messages][] = "Build hash: d615d004adfa8ebfe44e91119b88389c"
-    tests[contrib-destination][options][contrib-destination] = TRUE
+      tests[contrib-destination][name] = "Contrib-destination attribute"
+      tests[contrib-destination][makefile] = "tests/contrib-destination.make"
+      tests[contrib-destination][messages][] = "Build hash: d615d004adfa8ebfe44e91119b88389c"
+      tests[contrib-destination][options][contrib-destination] = TRUE
 
-    tests[file][name] = "File extraction"
-    tests[file][makefile] = "tests/file.make"
-    tests[file][messages][] = "Build hash: f76ec174a775ce67f8e9edcb02336ef2"
+      tests[file][name] = "File extraction"
+      tests[file][makefile] = "tests/file.make"
+      tests[file][messages][] = "Build hash: f76ec174a775ce67f8e9edcb02336ef2"
 
-    tests[md5-succeed][name] = "MD5 validation"
-    tests[md5-succeed][makefile] = "tests/md5-succeed.make"
-    tests[md5-succeed][messages][] = "Build hash: f76ec174a775ce67f8e9edcb02336ef2"
+      tests[md5-succeed][name] = "MD5 validation"
+      tests[md5-succeed][makefile] = "tests/md5-succeed.make"
+      tests[md5-succeed][messages][] = "Build hash: f76ec174a775ce67f8e9edcb02336ef2"
 
-    tests[ignore-checksums][name] = "Ignore invalid checksums"
-    tests[ignore-checksums][makefile] = "tests/md5-fail.make"
-    tests[ignore-checksums][messages][] = "Build hash: f76ec174a775ce67f8e9edcb02336ef2"
-    tests[ignore-checksums][options][ignore-checksums] = TRUE
+      tests[ignore-checksums][name] = "Ignore invalid checksums"
+      tests[ignore-checksums][makefile] = "tests/md5-fail.make"
+      tests[ignore-checksums][messages][] = "Build hash: f76ec174a775ce67f8e9edcb02336ef2"
+      tests[ignore-checksums][options][ignore-checksums] = TRUE
+    }
+    tests[cvs][name] = "CVS integration"
+    tests[cvs][makefile] = "tests/cvs.make"
+    tests[cvs][messages][] = "Build hash: f69d29c7ed065b42290bafb7ab9439f1"
+
+    tests[include][name] = "Including files and property overrides"
+    tests[include][makefile] = "tests/include.make"
+    tests[include][messages][] = "Build hash: e2e230ec5eccaf5618050559ab11510d"
+
+    tests[bzr][name] = "Bzr"
+    tests[bzr][makefile] = "tests/bzr.make"
+    tests[bzr][messages][] = "Build hash: 272e2b9bb27794c54396f2f03c159725"
+
+    tests[translations][name] = "Translation downloads"
+    tests[translations][makefile] = "tests/translations.make"
+    tests[translations][messages][] = "Build hash: 4aa84d1d71fbe1120cb2988cc4dd224d"
+    tests[translations][options][translations] = TRUE
+
+    tests[do-succeed][name] = "D.o: Success"
+    tests[do-succeed][makefile] = "tests/do-succeed.make"
+    tests[do-succeed][messages][] = "Build hash: fc3cedb0f656a4d9bc071815e4ca2e07"
+    tests[do-succeed][options][drupal-org] = TRUE
   }
-  tests[cvs][name] = "CVS integration"
-  tests[cvs][makefile] = "tests/cvs.make"
-  tests[cvs][messages][] = "Build hash: f69d29c7ed065b42290bafb7ab9439f1"
 
-  tests[include][name] = "Including files and property overrides"
-  tests[include][makefile] = "tests/include.make"
-  tests[include][messages][] = "Build hash: e2e230ec5eccaf5618050559ab11510d"
+  tests[md5-fail][name] = "Failed MD5 validation test"
+  tests[md5-fail][makefile] = "tests/md5-fail.make"
+  tests[md5-fail][build] = FALSE
+  tests[md5-fail][messages][] = "Checksum md5 verification failed for README.txt. Expected - fail -, received c8968d801a953b9ea735364d6f3dfabc."
+  tests[md5-fail][options][no-core] = TRUE
 
-  tests[bzr][name] = "Bzr"
-  tests[bzr][makefile] = "tests/bzr.make"
-  tests[bzr][messages][] = "Build hash: 272e2b9bb27794c54396f2f03c159725"
+  (options[drupal-org] = TRUE, build = FALSE) {
+    tests[do-fail-attribute][name] = "D.o: Fail attributes"
+    tests[do-fail-attribute][makefile] = "tests/do-fail-attribute.make"
 
-  tests[translations][name] = "Translation downloads"
-  tests[translations][makefile] = "tests/translations.make"
-  tests[translations][messages][] = "Build hash: 4aa84d1d71fbe1120cb2988cc4dd224d"
-  tests[translations][options][translations] = TRUE
+    tests[do-fail-dev][name] = "D.o: Fail dev"
+    tests[do-fail-dev][makefile] = "tests/do-fail-dev.make"
 
-  tests[do-succeed][name] = "D.o: Success"
-  tests[do-succeed][makefile] = "tests/do-succeed.make"
-  tests[do-succeed][messages][] = "Build hash: fc3cedb0f656a4d9bc071815e4ca2e07"
-  tests[do-succeed][options][drupal-org] = TRUE
-}
+    tests[do-fail-library][name] = "D.o: Fail library"
+    tests[do-fail-library][makefile] = "tests/do-fail-library.make"
 
-tests[md5-fail][name] = "Failed MD5 validation test"
-tests[md5-fail][makefile] = "tests/md5-fail.make"
-tests[md5-fail][build] = FALSE
-tests[md5-fail][messages][] = "Checksum md5 verification failed for README.txt. Expected - fail -, received c8968d801a953b9ea735364d6f3dfabc."
-tests[md5-fail][options][no-core] = TRUE
+    tests[do-fail-patch][name] = "D.o: Fail patch"
+    tests[do-fail-patch][makefile] = "tests/do-fail-patch.make"
 
-(options[drupal-org] = TRUE, build = FALSE) {
-  tests[do-fail-attribute][name] = "D.o: Fail attributes"
-  tests[do-fail-attribute][makefile] = "tests/do-fail-attribute.make"
-
-  tests[do-fail-dev][name] = "D.o: Fail dev"
-  tests[do-fail-dev][makefile] = "tests/do-fail-dev.make"
-
-  tests[do-fail-library][name] = "D.o: Fail library"
-  tests[do-fail-library][makefile] = "tests/do-fail-library.make"
-
-  tests[do-fail-patch][name] = "D.o: Fail patch"
-  tests[do-fail-patch][makefile] = "tests/do-fail-patch.make"
-
-  tests[do-fail-version][name] = "D.o: Fail version"
-  tests[do-fail-version][makefile] = "tests/do-fail-version.make"
+    tests[do-fail-version][name] = "D.o: Fail version"
+    tests[do-fail-version][makefile] = "tests/do-fail-version.make"
+  }
 }

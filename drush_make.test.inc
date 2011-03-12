@@ -35,7 +35,7 @@ function drush_make_test_get_tests($id = NULL) {
   $tests = drush_make_parser_parse($tokens);
   $tests = $tests['tests'];
 
-  if (is_string($tests)) { 
+  if (is_string($tests)) {
     drush_set_error($tests);
     return FALSE;
   }
@@ -46,60 +46,64 @@ function drush_make_test_get_tests($id = NULL) {
   return $tests;
 }
 
-/**
- * Run a drush make test.
- */
 function drush_make_test_run_test($id) {
   if ($test = drush_make_test_get_tests($id)) {
-    $makefile = dirname(__FILE__) .'/'. $test['makefile'];
-    $options = ($test['options'] ? $test['options'] : array()) + array('test' => TRUE, 'md5' => TRUE);
-
-    // Log the test command.
-    $debug_command = 'drush make';
-    foreach ($options as $k => $v) {
-      $debug_command .= _drush_escape_option($k, $v);
-    }
-    $debug_command .= " {$makefile}";
-    drush_log(dt('Test command: @debug.', array('@debug' => $debug_command)), 'ok');
-
-    $fail = FALSE;
-    if ($data = drush_backend_invoke('make '. $makefile, $options)) {
-      // Test build completion.
-      if (isset($test['build'])) {
-        if ($test['build'] && !empty($data['error_status'])) {
-          $fail = TRUE;
-          drush_log(dt('@testname: build failed.', array('@testname' => $test['name'])), 'error');
-        }
-        elseif (!$test['build'] && empty($data['error_status'])) {
-          $fail = TRUE;
-          drush_log(dt('@testname: build completed.', array('@testname' => $test['name'])), 'error');
-        }
-        elseif (!$test['build']) {
-          $error_code =& drush_get_context('DRUSH_ERROR_CODE', DRUSH_SUCCESS);
-          $error_code = DRUSH_SUCCESS;
-        }
-      }
-      // Test for messages.
-      if (isset($test['messages'])) {
-        $messages = array();
-        foreach ($data['log'] as $item) {
-          $messages[] = $item['message'];
-        }
-        foreach ($test['messages'] as $message) {
-          if (!in_array($message, $messages)) {
-            $fail = TRUE;
-            drush_log(dt('@testname: "@message" not found.', array('@testname' => $test['name'], '@message' => $message)), 'error');
-          }
-        }
-      }
-      if (!$fail) {
-        drush_log(dt('Drush make test @testname passed.', array('@testname' => $test['name'])), 'ok');
-        return TRUE;
-      }
-    }
-    drush_log(dt('Drush make test @testname failed.', array('@testname' => $test['name'])), 'error');
-    return FALSE;
+    return $test['test']($test);
   }
   drush_log(dt('Test @testname could not be found.', array('@testname' => $test['name'])), 'error');
+  return FALSE;
+}
+
+/**
+ * Run a makefile test.
+ */
+function drush_make_test_make_test($test) {
+  $makefile = dirname(__FILE__) .'/'. $test['makefile'];
+  $options = ($test['options'] ? $test['options'] : array()) + array('test' => TRUE, 'md5' => TRUE);
+
+  // Log the test command.
+  $debug_command = 'drush make';
+  foreach ($options as $k => $v) {
+    $debug_command .= _drush_escape_option($k, $v);
+  }
+  $debug_command .= " {$makefile}";
+  drush_log(dt('Test command: @debug.', array('@debug' => $debug_command)), 'ok');
+
+  $fail = FALSE;
+  if ($data = drush_backend_invoke('make '. $makefile, $options)) {
+    // Test build completion.
+    if (isset($test['build'])) {
+      if ($test['build'] && !empty($data['error_status'])) {
+        $fail = TRUE;
+        drush_log(dt('@testname: build failed.', array('@testname' => $test['name'])), 'error');
+      }
+      elseif (!$test['build'] && empty($data['error_status'])) {
+        $fail = TRUE;
+        drush_log(dt('@testname: build completed.', array('@testname' => $test['name'])), 'error');
+      }
+      elseif (!$test['build']) {
+        $error_code =& drush_get_context('DRUSH_ERROR_CODE', DRUSH_SUCCESS);
+        $error_code = DRUSH_SUCCESS;
+      }
+    }
+    // Test for messages.
+    if (isset($test['messages'])) {
+      $messages = array();
+      foreach ($data['log'] as $item) {
+        $messages[] = $item['message'];
+      }
+      foreach ($test['messages'] as $message) {
+        if (!in_array($message, $messages)) {
+          $fail = TRUE;
+          drush_log(dt('@testname: "@message" not found.', array('@testname' => $test['name'], '@message' => $message)), 'error');
+        }
+      }
+    }
+    if (!$fail) {
+      drush_log(dt('Drush make test @testname passed.', array('@testname' => $test['name'])), 'ok');
+      return TRUE;
+    }
+  }
+  drush_log(dt('Drush make test @testname failed.', array('@testname' => $test['name'])), 'error');
   return FALSE;
 }
