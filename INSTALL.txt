@@ -1,4 +1,3 @@
-
 Installation
 ------------
 Drush make depends on drush (the DRUpal SHell). To use drush_make, you

@@ -20,7 +20,7 @@ function _drush_make_top_level_containers($mapping = FALSE) {
     'themes' => 'theme',
     'profiles' => 'profile',
   );
-  return ($mapping ? $containers: array_keys($containers));
+  return ($mapping ? $containers : array_keys($containers));
 }
 
 /**
@@ -53,7 +53,7 @@ function drush_make_parse_info_file($makefile, $parsed = TRUE) {
         if (!is_array($included_info)) {
           return $included_info;
         }
-    
+
         foreach ($included_info as $key => $value) {
           if (isset($included_info[$key]) && isset($info[$key])) {
             if (is_array($info[$key]) && is_array($included_info[$key])) {
@@ -339,26 +339,26 @@ if (!function_exists('drush_shell_exec_interactive')) {
    */
   function drush_shell_exec_interactive($cmd) {
     $args = func_get_args();
-  
+
     //do not change the command itself, just the parameters.
     for ($x = 1; $x < sizeof($args); $x++) {
       $args[$x] = escapeshellarg($args[$x]);
     }
     $command = call_user_func_array('sprintf', $args);
-  
+
     if (drush_get_context('DRUSH_VERBOSE') || drush_get_context('DRUSH_SIMULATE')) {
       drush_log('Executing: ' . $command);
     }
-  
+
     if (!drush_get_context('DRUSH_SIMULATE')) {
       exec($command, $output, $result);
-  
+
       if (drush_get_context('DRUSH_DEBUG')) {
         foreach ($output as $line) {
           drush_print($line, 2);
         }
       }
-  
+
       // Exit code 0 means success.
       return ($result == 0);
     }
@@ -385,12 +385,12 @@ function drush_make_get_data($data_source) {
     $stdin = fopen('php://stdin', 'r');
     $data = '';
     $has_input = FALSE;
-  
+
     while ($line = fgets($stdin)) {
       $has_input = TRUE;
       $data .= $line;
     }
-  
+
     if ($has_input) {
       return $data;
     }

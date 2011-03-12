@@ -19,7 +19,7 @@ function _drush_make_generate($file) {
   $projects = array();
 
   $system_requirements = system_requirements('runtime');
-  $core_project = strtolower($system_requirements['drupal']['title']); 
+  $core_project = strtolower($system_requirements['drupal']['title']);
   $projects[$core_project] = array('_type' => 'core');
   if ($core_project != 'drupal') {
     $projects[$core_project]['custom_download'] = TRUE;
@@ -119,7 +119,7 @@ function _drush_generate_track_version($project, $version_options) {
   //  A.a. if it's a boolean, check the --include-versions option
   if ($version_options["exclude"] === TRUE) {
     // A.a.1 if --include-versions has been specified, ensure it's an array
-    // 
+    //
     if (is_array($version_options["include"])) {
       return in_array($project, $version_options["include"]);
     }

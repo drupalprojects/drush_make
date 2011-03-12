@@ -1,4 +1,3 @@
-
 Drush make
 ----------
 Drush make is an extension to drush that can create a ready-to-use drupal site,
@@ -431,7 +430,7 @@ Generate
 
 Drush make has a primitive makefile generation capability. To use it, simply
 change your directory to the Drupal installation from which you would like to
-generate the file, and run the following command: 
+generate the file, and run the following command:
 
 `drush generate-makefile /path/to/make-file.make`
 

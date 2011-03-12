@@ -287,7 +287,7 @@ class DrushMakeDo_ProjectVersion extends DrushMakeDo_Transformer {
     return $pass;
   }
   function convert($makefile) {
-    
+
   }
 }
 class DrushMakeDo_ProjectWhitelist extends DrushMakeDo_TopWhitelist {
@@ -308,7 +308,7 @@ class DrushMakeDo_ProjectPatch extends DrushMakeDo_Transformer {
     return TRUE;
   }
   function convert($makefile) {
-    
+
   }
 }
 class DrushMakeDo_ProjectUpdateXML extends DrushMakeDo_Transformer {
@@ -321,7 +321,7 @@ class DrushMakeDo_ProjectUpdateXML extends DrushMakeDo_Transformer {
     return $project_data;
   }
   function convert($makefile) {
-    
+
   }
 }
 

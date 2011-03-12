@@ -139,7 +139,7 @@ class DrushMakeDrupalorgConverter extends DrushMakeDrupalorgVersionChecker {
           }
           continue;
         }
- 
+
         // Clean out disallowed project attributes.
         foreach ($project_data as $attribute => $attribute_value) {
           if (!in_array($attribute, $project_attribute_whitelist)) {
@@ -147,7 +147,7 @@ class DrushMakeDrupalorgConverter extends DrushMakeDrupalorgVersionChecker {
             unset($project_data[$attribute]);
           }
         }
-        
+
         // Check that patches do in fact come from drupal.org.
         if (isset($project_data['patch'])) {
           foreach ($project_data['patch'] as $key => $patch) {
@@ -185,7 +185,7 @@ class DrushMakeDrupalorgConverter extends DrushMakeDrupalorgVersionChecker {
           }
         }
 
-        // Use the update XML to verify this project actually has a valid 
+        // Use the update XML to verify this project actually has a valid
         // release.
         if (isset($version)) {
           list($result, $final_version) = $this->latestVersion($project, $version);

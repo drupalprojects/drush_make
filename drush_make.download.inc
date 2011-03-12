@@ -27,13 +27,13 @@ function drush_make_download_cvs($name, $download, $download_location) {
     if (!isset($download['root'])) {
       $download['root'] = ":pserver:anonymous:anonymous@drupalcode.org:/cvs/drupal-contrib";
     }
-  
+
     // Checkout or export the module. CVS can't use absolute paths for named
     // directories, so change into the directory just above the final
-    // destination for the checkout. 
+    // destination for the checkout.
     $cd_to_directory = dirname($download_location);
     $destination_directory = basename($download_location);
-  
+
     $command = 'cvs -d%s ' . (drush_get_option('working-copy') ? 'checkout' : 'export') . ' -d%s';
     $args = array($download['root'], $destination_directory);
     if (isset($download['revision'])) {
@@ -46,7 +46,7 @@ function drush_make_download_cvs($name, $download, $download_location) {
     }
     $args[] = $download['module'];
     $command .= ' %s';
-  
+
     array_unshift($args, $command);
     array_unshift($args, dirname($download_location));
     if (call_user_func_array('drush_shell_cd_and_exec', $args)) {
@@ -355,7 +355,7 @@ function drush_make_download_git($name, $download, $download_location) {
 
   // split the given download url into pieces
   $url_array = array();
-  
+
   // Get the protocol, site and resource parts of the URL
   // original url = http://example.com/blog/index?name=foo
   // protocol = http://
@@ -369,13 +369,13 @@ function drush_make_download_git($name, $download, $download_location) {
   $url_array['port']     = $matches[5];
   $url_array['host']     = $matches[3];
   $url_array['resource'] = $matches[7];
-  
+
   // clean up the site portion by removing the trailing /
   $url_array['host'] = preg_replace('#/$#', '', $url_array['host']);
-  
+
   // clean up the protocol portion by removing the trailing ://
   $url_array['protocol'] = preg_replace('#://$#', '', $url_array['protocol']);
-  
+
   if (empty($url_array['protocol'])) {
     // If protocol is not given, assume an SSH URL.
     $url = $download['url'];
@@ -402,29 +402,29 @@ function drush_make_download_git($name, $download, $download_location) {
         // @TODO: implement port & user options
         $url_array['protocol'] .'://'. $url_array['user'] . $url_array['host'] .'/'. $url_array['resource'];
         break;
-  
+
       default:
         drush_make_error('DOWNLOAD_ERROR', dt('unknown protocol @protocol in %project', array('@protocol' => $url_array['protocol'], '%project' => $name)));
         return false;
     }
   }
-  
+
   $tmp_location = $tmp_path . '/__git__/' . basename($download_location);
-  
+
   drush_make_mkdir($tmp_path . '/__git__/');
-  
+
   // clone the given repository
   if (drush_shell_exec("git clone %s %s", $url, $tmp_location)) {
     drush_log(dt('%project cloned from %url.', array('%project' => $name, '%url' => $url)), 'ok');
-  
+
     // GIT Checkout only work on a ready cloned repo. So we switch to branch or to tag (only if we have no branch) after cloneing.
     if ($download['branch'] !== 'master' || $download['tag'] || $download['revision'] || !empty($download['submodule'])) {
-  
+
       // get current directory (for move back later)
       $cwd = getcwd();
       // change path to working copy of cloned repo
       chdir($tmp_location);
-  
+
       // Progress branch / tag / revision download. Ensure that only one option ist set (branch OR tag OR revision)
       // check if branch a other than master
       if ($download['branch'] !== 'master' && !$download['tag'] && !$download['revision']) {
@@ -477,7 +477,7 @@ function drush_make_download_git($name, $download, $download_location) {
       // move back to last current directory (first line)
       chdir($cwd);
     }
-  
+
     // Remove .git/ directory if working-copy flag was not specified.
     if (!$wc && file_exists($tmp_location . '/.git')) {
       drush_shell_exec("rm -rf %s", $tmp_location . '/.git');
