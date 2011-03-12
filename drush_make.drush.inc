@@ -406,7 +406,7 @@ function drush_make_move_build($build_path) {
 }
 
 function drush_make_version() {
-  return '2.0-dev';
+  return '3.0-dev';
 }
 
 /**
