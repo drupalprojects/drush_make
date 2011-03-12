@@ -132,10 +132,8 @@ function drush_drush_make_make() {
 /**
  * Implementation of drush_hook_post_COMMAND() for the make command.
  */
-function drush_drush_make_post_make($makefile = NULL, $build_path = NULL) {
-  if (!($build_path = drush_make_build_path($build_path))) {
-    return;
-  }
+function drush_drush_make_post_make() {
+  $build_path = drush_get_context('drush_make_build_path');
 
   if (drush_get_option('md5')) {
     drush_make_md5();
