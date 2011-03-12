@@ -105,7 +105,7 @@ function drush_make_parser_parse($tokens) {
           $command['key'][1] = $command['value'];
           $info[$command['key'][0]][$command['value']] = array();
         }
-        elseif (count($command['key']) == 2 && in_array($command['key'][0], array_keys)) {
+        elseif (count($command['key']) == 2 && in_array($command['key'][0], _drush_make_top_level_containers())) {
           $info[$command['key'][0]][$command['key'][1]] = array('version' => _drush_make_parser_value($command['value']));
         }
         else {

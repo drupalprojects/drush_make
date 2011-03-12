@@ -122,7 +122,6 @@ function drush_drush_make_make_validate($makefile = NULL, $build_path = NULL) {
 function drush_drush_make_make() {
   $info = drush_get_context('drush_make_info');
   if (drush_make_projects(FALSE, drush_get_option('contrib-destination', 'sites/all'), $info)) {
-    drush_make_libraries(drush_get_option('contrib-destination', 'sites/all'), $info);
 
     if (drush_get_option('prepare-install')) {
       drush_make_prepare_install($build_path);
@@ -181,8 +180,9 @@ function drush_make_projects($recursion, $contrib_destination, $info) {
       'version'             => DRUSH_MAKE_VERSION_BEST,
       'location'            => drush_get_option('drush-make-update-default-url'),
       'subdir'              => '',
-      'directory_name'      => '',
+      'directory_name'      => (isset($project['type']) && $project['type'] == 'library' ? $key : ''),
     );
+
     if ($project['location'] != 'http://updates.drupal.org/release-history' && !isset($project['type'])) {
       $project = drush_make_updatexml($project);
       $project['download_type'] = ($project['type'] == 'core' ? 'core' : 'contrib');
@@ -246,33 +246,6 @@ function drush_make_projects($recursion, $contrib_destination, $info) {
     }
   }
   return TRUE;
-}
-
-function drush_make_libraries($contrib_destination, $info) {
-  if (empty($info['libraries'])) {
-    return;
-  }
-  $ignore_checksums = drush_get_option('ignore-checksums');
-  foreach ($info['libraries'] as $key => $library) {
-    if (!is_string($key) || !is_array($library)) {
-      // TODO Print a prettier message
-      continue;
-    }
-    // Merge the known data onto the library info.
-    $library += array(
-      'name'                => $key,
-      'core'                => $info['core'],
-      'build_path'          => $build_path,
-      'contrib_destination' => $contrib_destination,
-      'subdir'              => '',
-      'directory_name'      => $key,
-    );
-    if ($ignore_checksums) {
-      unset($library['download']['md5']);
-    }
-    $class = new DrushMakeProject_Library($library);
-    $class->make();
-  }
 }
 
 function drush_make_updatexml($project) {

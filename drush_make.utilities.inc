@@ -81,10 +81,12 @@ function drush_make_parse_info_file($makefile, $parsed = TRUE) {
         if (!$item['version']) {
           unset($info[$key][$inner_key]);
         }
-        if ($type != '') {
-          $item['type'] = $type;
+        else {
+          if ($type != '') {
+            $item['type'] = $type;
+          }
+          $info['projects'][$inner_key] = $item;
         }
-        $info['projects'][$inner_key] = $item;
       }
     }
   }
