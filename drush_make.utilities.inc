@@ -66,6 +66,9 @@ function drush_make_parse_info_file($makefile, $parsed = TRUE) {
               return dt('Included makefile disagrees about whether @key is an array.', array('@key' => $key));
             }
           }
+          else if (file_exists($include) && ($file = drush_make_parse_info_file($include, FALSE))) {
+            $includes[] = $file;
+          }
           else {
             $info[$key] = $included_info[$key];
           }
