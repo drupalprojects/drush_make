@@ -22,6 +22,7 @@ function _drush_make_generate($file) {
 
   $projects = array();
 
+  // Handle core
   $system_requirements = system_requirements('runtime');
   $core_project = strtolower($system_requirements['drupal']['title']);
   $projects[$core_project] = array('_type' => 'core');
