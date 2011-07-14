@@ -1,12 +1,16 @@
 <?php
 
-include_once 'includes/install.inc';
-include_once drupal_get_path('module', 'system') . '/system.install';
 
 /**
  * Drush callback; generate makefile from the current build.
  */
 function _drush_make_generate($file) {
+
+  // A DRUSH_BOOTSTRAP_DRUPAL_FULL should be done already
+  // so these include should work in the target drupal installation
+  include_once 'includes/install.inc';
+  include_once drupal_get_path('module', 'system') . '/system.install';
+
   // What projects should we pin the versions for?
   // Check the command-line options for details
   foreach(array("include", "exclude") as $option) {
@@ -216,6 +220,8 @@ function _drush_make_generate_makefile_contents($projects) {
     }
     $output[] = '';
   }
+
+  // Start rendering the output to text
   $string = '';
   foreach ($output as $k => $v) {
     if (!is_numeric($k)) {
