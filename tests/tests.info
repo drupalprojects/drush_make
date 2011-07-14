@@ -15,12 +15,12 @@
 
       tests[no-patch-txt][name] = "Test --no-patch-txt option"
       tests[no-patch-txt][makefile] = "tests/patches.make"
-      tests[no-patch-txt][messages][] = "Build hash: 24f14f6e28498678cebcab2cff3e1030"
+      tests[no-patch-txt][messages][] = "Build hash: e2d38e343c7e95b994443c34ec665a23"
       tests[no-patch-txt][options][no-patch-txt] = TRUE
 
       tests[patch][name] = "Test patching and writing of PATCHES.txt file"
       tests[patch][makefile] = "tests/patches.make"
-      tests[patch][messages][] = "Build hash: 173ae5e2120463e31ff2e2a9cc02491b"
+      tests[patch][messages][] = "Build hash: c17e8b59055db741778f9048bf289332"
 
       tests[recursion][name] = "Recursion"
       tests[recursion][makefile] = "tests/recursion.make"
