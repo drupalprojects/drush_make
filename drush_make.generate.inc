@@ -3,6 +3,8 @@
 
 /**
  * Drush callback; generate makefile from the current build.
+ *
+ * @param string $file Filename of the makefile to use for this build.
  */
 function _drush_make_generate($file) {
 
@@ -118,6 +120,10 @@ function _drush_make_generate($file) {
 
 /**
  * Helper function to determine if a given project is to have its version tracked
+ *
+ * @param array $project The project data.
+ * @param array $version_options Specific versions to include or exclude.
+ * @return boolean
  */
 function _drush_generate_track_version($project, $version_options) {
   // A. If --exclude-versions has been specified:
@@ -156,6 +162,11 @@ function _drush_generate_track_version($project, $version_options) {
  *
  * It also checks for consistency by comparing given project type with to the
  * type obtained from the update service.
+
+ * @param string $name The project name.
+ * @param string $type The project type.
+ * @param string $status_url The url to fetch project status information.
+ * @return <type>
  */
 function _drush_generate_makefile_check_updatexml($name, $type, $status_url = '') {
   if ($status_url == '') {
@@ -176,6 +187,9 @@ function _drush_generate_makefile_check_updatexml($name, $type, $status_url = ''
 
 /**
  * Helper function to check for a non-default installation location.
+ *
+ * @param array $project The project data.
+ * @return array
  */
 function _drush_generate_makefile_check_path($project) {
   $info = array();
@@ -188,6 +202,12 @@ function _drush_generate_makefile_check_path($project) {
   return $info;
 }
 
+/**
+ * Genarate the actual makefile based on the data in $projects.
+ *
+ * @param array $projects Array with project information.
+ * @return string Make file contents.
+ */
 function _drush_make_generate_makefile_contents($projects) {
   $output = array();
   $custom = FALSE;
