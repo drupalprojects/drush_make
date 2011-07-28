@@ -11,7 +11,7 @@
 
       tests[git][name] = "GIT integration"
       tests[git][makefile] = "tests/git.make"
-      tests[git][messages][] = "Build hash: 374b448ab58cb329585ff75337bf5374"
+      tests[git][messages][] = "Build hash: ac0899a193835f7e93af812dae4e2c58"
 
       tests[no-patch-txt][name] = "Test --no-patch-txt option"
       tests[no-patch-txt][makefile] = "tests/patches.make"
