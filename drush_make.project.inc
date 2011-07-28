@@ -205,11 +205,11 @@ class DrushMakeProject {
               drush_make_mkdir($this->project_directory . '/profiles/default/translations');
               drush_make_mkdir($this->project_directory . '/modules/system/translations');
               drush_shell_exec("cp %s %s", $filename, $this->project_directory . '/profiles/default/translations/' . $langcode . '.po');
-              drush_shell_exec("mv %s %s", $filename, $this->project_directory . '/modules/system/translations');
+              drush_shell_exec("mv %s %s", $filename, $this->project_directory . '/modules/system/translations/' . $langcode . '.po');
             }
             else {
               drush_make_mkdir($this->project_directory . '/translations');
-              drush_shell_exec("mv %s %s", $filename, $this->project_directory . '/translations');
+              drush_shell_exec("mv %s %s", $filename, $this->project_directory . '/translations/' . $langcode . '.po');
             }
           }
           else {
