@@ -104,10 +104,12 @@ function drush_drush_make_make_validate($makefile = NULL, $build_path = NULL) {
   }
 
   $info = drush_make_parse_info_file($makefile);
+
   if (is_string($info)) {
     drush_make_error('PARSE_ERROR', $info);
     return FALSE;
   }
+
   if ($info === FALSE || ($info = drush_make_validate_info_file($info)) === FALSE) {
     return FALSE;
   }
