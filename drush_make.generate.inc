@@ -7,6 +7,9 @@
  * @param string $file Filename of the makefile to use for this build.
  */
 function _drush_make_generate($file) {
+  if (!$file) {
+    drush_die('Missing filename');
+  }
 
   // A DRUSH_BOOTSTRAP_DRUPAL_FULL should be done already
   // so these include should work in the target drupal installation
