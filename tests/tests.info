@@ -62,7 +62,7 @@
 
     tests[translations][name] = "Translation downloads"
     tests[translations][makefile] = "tests/translations.make"
-    tests[translations][messages][] = "Build hash: 4aa84d1d71fbe1120cb2988cc4dd224d"
+    tests[translations][messages][] = "Build hash: 1c662c27170ac23942c6a7eb15512a95"
     tests[translations][options][translations] = TRUE
 
     tests[do-succeed][name] = "D.o: Success"
