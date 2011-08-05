@@ -103,7 +103,7 @@ function drush_drush_make_make_validate($makefile = NULL, $build_path = NULL) {
     return FALSE;
   }
 
-  $info = drush_make_parse_info_file($makefile);
+  $info = drush_make_parse_info_file($makefile, array(), array('top level' => _drush_make_top_level_containers()));
 
   if (is_string($info)) {
     drush_make_error('PARSE_ERROR', $info);

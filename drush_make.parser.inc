@@ -9,10 +9,11 @@ define('DRUSH_MAKE_COMMAND_CONDITION', 'condition');
 define('DRUSH_MAKE_COMMAND_BEGIN_SCOPE', 'begin scope');
 define('DRUSH_MAKE_COMMAND_END_SCOPE', 'end scope');
 
-function drush_make_parser_parse($data, $conditions = array()) {
+function drush_make_parser_parse($data, $conditions = array(), $options = array()) {
+  $options += array('top level' => array());
   $tokens = _drush_make_parser_tokenize($data);
   $commands = _drush_make_parser_extract_commands($tokens);
-  $info = _drush_make_parser_interpret($commands, $conditions);
+  $info = _drush_make_parser_interpret($commands, $conditions, $options);
   return $info;
 }
 
@@ -193,7 +194,7 @@ function _drush_make_parser_extract_commands($tokens) {
   return $commands;
 }
 
-function _drush_make_parser_interpret($commands, $conditions) {
+function _drush_make_parser_interpret($commands, $conditions, $options) {
   if (is_string($commands)) {
     return $commands;
   }
@@ -211,7 +212,7 @@ function _drush_make_parser_interpret($commands, $conditions) {
           $command['key'][1] = $command['value'];
           $info[$command['key'][0]][$command['value']] = array();
         }
-        elseif (count($command['key']) == 2 && in_array($command['key'][0], _drush_make_top_level_containers())) {
+        elseif (count($command['key']) == 2 && in_array($command['key'][0], $options['top level'])) {
           $info[$command['key'][0]][$command['key'][1]] = array('version' => _drush_make_parser_value($command['value']));
         }
         else {
