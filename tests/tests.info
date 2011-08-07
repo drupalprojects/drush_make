@@ -52,10 +52,6 @@
     tests[cvs][makefile] = "tests/cvs.make"
     tests[cvs][messages][] = "Build hash: f69d29c7ed065b42290bafb7ab9439f1"
 
-    tests[include][name] = "Including files and property overrides"
-    tests[include][makefile] = "tests/include.make"
-    tests[include][messages][] = "Build hash: e2e230ec5eccaf5618050559ab11510d"
-
     tests[bzr][name] = "Bzr"
     tests[bzr][makefile] = "tests/bzr.make"
     tests[bzr][messages][] = "Build hash: 272e2b9bb27794c54396f2f03c159725"
@@ -94,6 +90,10 @@
     tests[do-fail-version][makefile] = "tests/do-fail-version.make"
   }
 }
+
+tests[include][name] = "Including files and property overrides"
+tests[include][makefile] = "tests/include.make"
+tests[include][test] = "drush_make_test_include_test"
 
 tests[parser][name] = "Parser"
 tests[parser][makefile] = "tests/parser.info"

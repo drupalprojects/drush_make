@@ -31,7 +31,7 @@ function drush_make_test($test) {
  */
 function drush_make_test_get_tests($id = NULL) {
   include_once 'drush_make.parser.inc';
-  $tests = drush_make_parser_parse(file_get_contents(dirname(__FILE__) . '/tests/tests.info'));
+  $tests = drush_make_parser_parse(dirname(__FILE__) . '/tests/tests.info');
 
   $tests = $tests['tests'];
 
@@ -109,7 +109,7 @@ function drush_make_test_make_test($test) {
 }
 
 function drush_make_test_parser_test($test) {
-  $makefile = dirname(__FILE__) .'/'. $test['makefile'];
+  $makefile = dirname(__FILE__) . '/' . $test['makefile'];
   include_once 'drush_make.parser.inc';
   $expected_result = array(
     'one' => 'one',
@@ -128,7 +128,7 @@ function drush_make_test_parser_test($test) {
     'eight' => 8,
     'twelve' => 12,
   );
-  $result = drush_make_parser_to_array(drush_make_parser_parse(file_get_contents($makefile)));
+  $result = drush_make_parser_to_array(drush_make_parser_parse($makefile));
 
   ksort($result);
   ksort($expected_result);
@@ -137,7 +137,7 @@ function drush_make_test_parser_test($test) {
     return FALSE;
   }
 
-  $result = drush_make_parser_to_array(drush_make_parser_parse(file_get_contents($makefile), array(), array('top level' => array('projects'))));
+  $result = drush_make_parser_to_array(drush_make_parser_parse($makefile, array(), array('top level' => array('projects'))));
   $expected_result['projects']['ten'] = array('version' => 10);
   ksort($result);
   if ($result != $expected_result) {
@@ -146,7 +146,7 @@ function drush_make_test_parser_test($test) {
   }
 
   $expected_result['projects']['nine'] = array('two' => 'two', 'version' => 9);
-  $result = drush_make_parser_to_array(drush_make_parser_parse(file_get_contents($makefile), array('environment' => 'twenty'), array('top level' => array('projects'))));
+  $result = drush_make_parser_to_array(drush_make_parser_parse($makefile, array('environment' => 'twenty'), array('top level' => array('projects'))));
   ksort($result);
   ksort($expected_result);
   if ($result != $expected_result) {
@@ -155,5 +155,32 @@ function drush_make_test_parser_test($test) {
   }
 
   drush_log(dt('Drush make parser test passed.'), 'ok');
+  return TRUE;
+}
+
+function drush_make_test_include_test($test) {
+  $makefile = dirname(__FILE__) . '/' . $test['makefile'];
+  $expected_result = array(
+    'core' => '6.x',
+    'api' => '2',
+    'projects' => array(
+      'views' => array('version' => '2.11'),
+      'eldorado_superfly' => array('version' => '1.1'),
+      'cck' => array('version' => '2.6'),
+      'drupal' => array('version' => '6.17'),
+    ),
+    'includes' => array(
+      'included2.make' => array(),
+      'included.make' => array(),
+    ),
+  );
+  $result = drush_make_parser_to_array(drush_make_parse_info_file($makefile));
+  ksort($result);
+  ksort($expected_result);
+  if ($result != $expected_result) {
+    drush_log(dt('Drush make include test failed 1.'), 'error');
+    return FALSE;
+  }
+  drush_log(dt('Drush make include test passed.'), 'ok');
   return TRUE;
 }

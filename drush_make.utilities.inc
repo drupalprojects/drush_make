@@ -30,51 +30,11 @@ function _drush_make_top_level_containers($mapping = FALSE) {
  *
  * @see drupal_parse_info_file
  */
-function drush_make_parse_info_file($makefile, $parsed = TRUE) {
-  if (!($data = drush_make_get_data($makefile))) {
-    return drush_set_error(dt('Invalid or empty make file: %makefile', array('%makefile' => $makefile)));
-  }
-
+function drush_make_parse_info_file($makefile) {
   include_once 'drush_make.parser.inc';
-  $info = drush_make_parser_parse($data);
-
-  if (!$info) {
-    return FALSE;
-  }
-  if (!empty($info['includes']) && is_array($info['includes'])) {
-    $include_path = dirname($makefile);
-    $includes = array();
-    foreach ($info['includes'] as $include => $array) {
-      if (drush_make_valid_url($include, TRUE) || file_exists($include_path . '/' . $include)) {
-        if (file_exists($include_path . '/' . $include)) {
-          $include = $include_path . '/' . $include;
-        }
-        $included_info = drush_make_parse_info_file($include);
-        if (!is_array($included_info)) {
-          return $included_info;
-        }
-
-        foreach ($included_info as $key => $value) {
-          if (isset($included_info[$key]) && isset($info[$key])) {
-            if (is_array($info[$key]) && is_array($included_info[$key])) {
-              $info[$key] = array_merge($included_info[$key], $info[$key]);
-            }
-            elseif (!is_array($info[$key]) && !is_array($included_info[$key])) {
-              $info[$key] = $included_info[$key];
-            }
-            else {
-              return dt('Included makefile disagrees about whether @key is an array.', array('@key' => $key));
-            }
-          }
-          else if (file_exists($include) && ($file = drush_make_parse_info_file($include, FALSE))) {
-            $includes[] = $file;
-          }
-          else {
-            $info[$key] = $included_info[$key];
-          }
-        }
-      }
-    }
+  $info = drush_make_parser_parse($makefile, array(), array('top level' => _drush_make_top_level_containers(), 'include_path' => dirname($makefile)));
+  if (!is_array($info)) {
+    return $info;
   }
 
   foreach (_drush_make_top_level_containers(TRUE) as $key => $type) {
