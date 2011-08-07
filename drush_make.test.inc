@@ -32,6 +32,7 @@ function drush_make_test($test) {
 function drush_make_test_get_tests($id = NULL) {
   include_once 'drush_make.parser.inc';
   $tests = drush_make_parser_parse(file_get_contents(dirname(__FILE__) . '/tests/tests.info'));
+
   $tests = $tests['tests'];
 
   if (is_string($tests)) {
@@ -127,7 +128,7 @@ function drush_make_test_parser_test($test) {
     'eight' => 8,
     'twelve' => 12,
   );
-  $result = drush_make_parser_parse(file_get_contents($makefile));
+  $result = drush_make_parser_to_array(drush_make_parser_parse(file_get_contents($makefile)));
 
   ksort($result);
   ksort($expected_result);
@@ -136,7 +137,7 @@ function drush_make_test_parser_test($test) {
     return FALSE;
   }
 
-  $result = drush_make_parser_parse(file_get_contents($makefile), array(), array('top level' => array('projects')));
+  $result = drush_make_parser_to_array(drush_make_parser_parse(file_get_contents($makefile), array(), array('top level' => array('projects'))));
   $expected_result['projects']['ten'] = array('version' => 10);
   ksort($result);
   if ($result != $expected_result) {
@@ -145,7 +146,7 @@ function drush_make_test_parser_test($test) {
   }
 
   $expected_result['projects']['nine'] = array('two' => 'two', 'version' => 9);
-  $result = drush_make_parser_parse(file_get_contents($makefile), array('environment' => 'twenty'), array('top level' => array('projects')));
+  $result = drush_make_parser_to_array(drush_make_parser_parse(file_get_contents($makefile), array('environment' => 'twenty'), array('top level' => array('projects'))));
   ksort($result);
   ksort($expected_result);
   if ($result != $expected_result) {

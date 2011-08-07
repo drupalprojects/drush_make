@@ -210,20 +210,14 @@ function _drush_make_parser_interpret($commands, $conditions, $options) {
       else {
         if (count($command['key']) == 2 && $command['key'][1] == '') {
           $command['key'][1] = $command['value'];
-          $info[$command['key'][0]][$command['value']] = array();
+          $info[$command['key'][0]][$command['value']] = new DrushMakeParserObject($scope);
         }
         elseif (count($command['key']) == 2 && in_array($command['key'][0], $options['top level'])) {
-          $info[$command['key'][0]][$command['key'][1]] = array('version' => _drush_make_parser_value($command['value']));
+          $info[$command['key'][0]][$command['key'][1]] = new DrushMakeParserObject($scope);
+          $info[$command['key'][0]][$command['key'][1]]['version'] = _drush_make_parser_value($command['value']);
         }
         else {
-          _drush_make_parser_assign($info, $command);
-        }
-
-        if (!in_array(array($command['key'][0], $command['key'][1]), $merged)) {
-          foreach ($scope as $item) {
-            $info[$command['key'][0]][$command['key'][1]] = array_merge_recursive($item, $info[$command['key'][0]][$command['key'][1]]);
-          }
-          $merged[] = array($command['key'][0], $command['key'][1]);
+          _drush_make_parser_assign($info, $command, $scope);
         }
       }
     }
@@ -232,7 +226,7 @@ function _drush_make_parser_interpret($commands, $conditions, $options) {
       $conditions_passed = TRUE;
       foreach ($command['scope'] as $scope_item) {
         if ($scope_item['type'] == DRUSH_MAKE_COMMAND_ASSIGNMENT) {
-          _drush_make_parser_assign($current_scope, $scope_item);
+          _drush_make_parser_assign($current_scope, $scope_item, FALSE);
         }
         elseif ($scope_item['type'] == DRUSH_MAKE_COMMAND_CONDITION &&
           (!isset($conditions[$scope_item['key'][0]]) || $conditions[$scope_item['key'][0]] != $scope_item['value'])) {
@@ -254,17 +248,32 @@ function _drush_make_parser_interpret($commands, $conditions, $options) {
   return $info;
 }
 
-function _drush_make_parser_assign(&$current, $assignment) {
-  foreach ($assignment['key'] as $key) {
+function _drush_make_parser_assign(&$current, $assignment, $scope) {
+  $level = 0;
+  while ($key = array_shift($assignment['key'])) {
     if ($key != '' && !isset($current[$key])) {
-      $current[$key] = array();
+      if ($level == 1 && $scope !== FALSE) {
+        $current[$key] = new DrushMakeParserObject($scope);
+      }
+      else {
+        $current[$key] = array();
+      }
     }
     if ($key == '') {
       $current = &$current[];
+      if ($level == 1 && $scope !== FALSE) {
+        $current = new DrushMakeParserObject($scope);
+      }
     }
     else {
       $current = &$current[$key];
     }
+
+    if (!empty($assignment['key']) && $current instanceof DrushMakeParserObject && $scope !== FALSE) {
+      $current->setValue($assignment['key'], _drush_make_parser_value($assignment['value']));
+      return;
+    }
+    $level++;
   }
   $current = _drush_make_parser_value($assignment['value']);
 }
@@ -275,4 +284,69 @@ function _drush_make_parser_value($value) {
     $value = $constants[$value];
   }
   return $value;
+}
+
+function drush_make_parser_to_array($info) {
+  print_r($info);
+  foreach ($info as $top_key => $top_value) {
+    if (!is_array($top_value)) {
+      continue;
+    }
+    foreach ($top_value as $key => $value) {
+      if ($value instanceof DrushMakeParserObject) {
+        $info[$top_key][$key] = $value->toArray();
+      }
+    }
+  }
+  return $info;
+}
+
+class DrushMakeParserObject extends ArrayObject {
+  protected $scope = array();
+  protected $store = array();
+  function __construct($scopes) {
+    // Normalize scope.
+    foreach ($scopes as $scope) {
+      $this->scope = array_merge_recursive($scope, $this->scope);
+    }
+  }
+  function getScope() {
+    return $this->scope;
+  }
+  function offsetGet($offset) {
+    if (isset($this->store[$offset])) {
+      return $this->store[$offset];
+    }
+    elseif (isset($this->storage[$offset])) {
+      return $this->scope[$offset];
+    }
+  }
+  function offsetExists($offset) {
+    return isset($this->store[$offset]);
+  }
+  function offsetSet($offset, $value) {
+    $this->store[$offset] = $value;
+  }
+  function offsetUnset($offset) {
+    unset($this->store[$offset]);
+  }
+  function toArray() {
+    return array_merge_recursive($this->store, $this->scope);
+  }
+  function setValue($keys, $value) {
+    $key = array_shift($keys);
+    $current = &$this->store[$key];
+    foreach ($keys as $key) {
+      if ($key != '' && !isset($current[$key])) {
+        $current[$key] = array();
+      }
+      if ($key == '') {
+        $current = &$current[];
+      }
+      else {
+        $current = &$current[$key];
+      }
+    }
+    $current = $value;
+  }
 }
