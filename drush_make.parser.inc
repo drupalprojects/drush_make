@@ -269,7 +269,7 @@ function _drush_make_parser_assign(&$current, $assignment, $scope) {
       $current = &$current[$key];
     }
 
-    if (!empty($assignment['key']) && $current instanceof DrushMakeParserObject && $scope !== FALSE) {
+    if ($current instanceof DrushMakeParserObject && $scope !== FALSE) {
       $current->setValue($assignment['key'], _drush_make_parser_value($assignment['value']));
       return;
     }
@@ -287,14 +287,13 @@ function _drush_make_parser_value($value) {
 }
 
 function drush_make_parser_to_array($info) {
-  print_r($info);
   foreach ($info as $top_key => $top_value) {
     if (!is_array($top_value)) {
       continue;
     }
     foreach ($top_value as $key => $value) {
       if ($value instanceof DrushMakeParserObject) {
-        $info[$top_key][$key] = $value->toArray();
+        $info[$top_key][$key] = $value->toValue();
       }
     }
   }
@@ -314,6 +313,9 @@ class DrushMakeParserObject extends ArrayObject {
     return $this->scope;
   }
   function offsetGet($offset) {
+    if (!is_array($this->store)) {
+      return;
+    }
     if (isset($this->store[$offset])) {
       return $this->store[$offset];
     }
@@ -322,31 +324,50 @@ class DrushMakeParserObject extends ArrayObject {
     }
   }
   function offsetExists($offset) {
+    if (!is_array($this->store)) {
+      return;
+    }
     return isset($this->store[$offset]);
   }
   function offsetSet($offset, $value) {
+    if (!is_array($this->store)) {
+      return;
+    }
     $this->store[$offset] = $value;
   }
   function offsetUnset($offset) {
+    if (!is_array($this->store)) {
+      return;
+    }
     unset($this->store[$offset]);
   }
-  function toArray() {
-    return array_merge_recursive($this->store, $this->scope);
+  function toValue() {
+    if (is_array($this->store)) {
+      return array_merge_recursive($this->store, $this->scope);
+    }
+    else {
+      return $this->store;
+    }
   }
   function setValue($keys, $value) {
-    $key = array_shift($keys);
-    $current = &$this->store[$key];
-    foreach ($keys as $key) {
-      if ($key != '' && !isset($current[$key])) {
-        $current[$key] = array();
-      }
-      if ($key == '') {
-        $current = &$current[];
-      }
-      else {
-        $current = &$current[$key];
-      }
+    if (empty($keys)) {
+      $this->store = $value;
     }
-    $current = $value;
+    else {
+      $key = array_shift($keys);
+      $current = &$this->store[$key];
+      foreach ($keys as $key) {
+        if ($key != '' && !isset($current[$key])) {
+          $current[$key] = array();
+        }
+        if ($key == '') {
+          $current = &$current[];
+        }
+        else {
+          $current = &$current[$key];
+        }
+      }
+      $current = $value;
+    }
   }
 }
