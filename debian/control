@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Christopher Gervais <chris@ergonlogic.com>
 Uploaders: Antoine Beaupré <anarcat@koumbit.org>
 Build-Depends: debhelper (>= 7.0.50~)
-Standards-Version: 3.8.3
+Standards-Version: 3.9.2
 Vcs-Git: git://drupalcode.org/project/drush_make.git
 Vcs-browser: http://drupalcode.org/project/drush_make.git
 Homepage: https://drupal.org/project/drush_make
