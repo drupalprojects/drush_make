@@ -10,7 +10,7 @@ Homepage: https://drupal.org/project/drush_make
 
 Package: drush-make
 Architecture: all
-Depends: drush (>= 4.5), ${misc:Depends}
+Depends: drush (>= 4.4), ${misc:Depends}
 Description: Drupal source code deployment tool
  Drush Make is an extension to drush that can create a ready-to-use
  Drupal code-base, pulling sources from various locations. It does this by
