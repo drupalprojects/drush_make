@@ -1,1 +1,2 @@
 *.inc /usr/share/drush/commands/drush_make
+contrib/* /usr/share/drush/commands/drush_make/contrib 
