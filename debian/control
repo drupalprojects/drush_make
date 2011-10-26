@@ -2,6 +2,7 @@ Source: drush-make
 Section: php
 Priority: optional
 Maintainer: Christopher Gervais <chris@ergonlogic.com>
+Uploaders: Antoine Beaupré <anarcat@koumbit.org>
 Build-Depends: debhelper (>= 7.0.50~)
 Standards-Version: 3.8.3
 Vcs-Git: git://drupalcode.org/project/drush_make.git
